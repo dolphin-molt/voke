@@ -11,6 +11,7 @@ final class KeyboardOutputService: ObservableObject {
     }
 
     private var activeShortcuts: [String: ActiveOutput] = [:]
+    private var repeatTasks: [String: Task<Void, Never>] = [:]
 
     var isAccessibilityTrusted: Bool {
         AXIsProcessTrusted()
@@ -48,10 +49,14 @@ final class KeyboardOutputService: ObservableObject {
         let targetPID = deliveryTarget(for: shortcut)
         post(shortcut, keyDown: true, targetPID: targetPID)
         activeShortcuts[id] = ActiveOutput(shortcut: shortcut, targetPID: targetPID)
+        if !shortcut.modifierOnly {
+            startRepeating(id: id)
+        }
         activeOutputCount = activeShortcuts.count
     }
 
     func release(id: String) {
+        repeatTasks.removeValue(forKey: id)?.cancel()
         guard let output = activeShortcuts.removeValue(forKey: id) else { return }
         post(output.shortcut, keyDown: false, targetPID: output.targetPID)
         activeOutputCount = activeShortcuts.count
@@ -59,9 +64,23 @@ final class KeyboardOutputService: ObservableObject {
 
     func releaseAll() {
         let active = activeShortcuts
+        repeatTasks.values.forEach { $0.cancel() }
+        repeatTasks.removeAll()
         activeShortcuts.removeAll()
         active.forEach { post($0.value.shortcut, keyDown: false, targetPID: $0.value.targetPID) }
         activeOutputCount = 0
+    }
+
+    private func startRepeating(id: String) {
+        repeatTasks[id]?.cancel()
+        repeatTasks[id] = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(NSEvent.keyRepeatDelay))
+            while !Task.isCancelled {
+                guard let self, let output = self.activeShortcuts[id] else { return }
+                self.post(output.shortcut, keyDown: true, targetPID: output.targetPID, isRepeat: true)
+                try? await Task.sleep(for: .seconds(NSEvent.keyRepeatInterval))
+            }
+        }
     }
 
     private func deliveryTarget(for shortcut: KeyboardShortcut) -> pid_t? {
@@ -72,7 +91,7 @@ final class KeyboardOutputService: ObservableObject {
         return app.processIdentifier
     }
 
-    private func post(_ shortcut: KeyboardShortcut, keyDown: Bool, targetPID: pid_t?) {
+    private func post(_ shortcut: KeyboardShortcut, keyDown: Bool, targetPID: pid_t?, isRepeat: Bool = false) {
         guard let source = CGEventSource(stateID: .combinedSessionState),
               let event = CGEvent(
                 keyboardEventSource: source,
@@ -98,6 +117,9 @@ final class KeyboardOutputService: ObservableObject {
             flags = activeModifierFlags | shortcut.modifierFlags
         }
         event.flags = CGEventFlags(rawValue: UInt64(flags))
+        if isRepeat {
+            event.setIntegerValueField(.keyboardEventAutorepeat, value: 1)
+        }
         if let targetPID {
             event.postToPid(targetPID)
         } else {
