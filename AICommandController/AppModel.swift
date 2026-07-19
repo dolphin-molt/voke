@@ -355,9 +355,7 @@ final class AppModel: ObservableObject {
                 return
             }
             let direction = mapping.appSwitchDirection ?? .next
-            let modifiers: NSEvent.ModifierFlags = direction == .next ? [.command] : [.command, .shift]
-            let shortcut = KeyboardShortcut(keyCode: 48, modifierFlags: modifiers.rawValue, modifierOnly: false)
-            keyboard.tapGlobal(shortcut)
+            keyboard.switchApplication(direction)
             addEvent("\(control.rawValue) → \(direction.title)")
         case .shell:
             guard pressed else { return }

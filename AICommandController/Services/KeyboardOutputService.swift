@@ -30,6 +30,36 @@ final class KeyboardOutputService: ObservableObject {
         tap(shortcut, targetPID: nil)
     }
 
+    func switchApplication(_ direction: AppSwitchDirection) {
+        guard isAccessibilityTrusted else { return }
+        let commandID = "system.app-switch.command"
+        let shiftID = "system.app-switch.shift"
+        let leftCommand = KeyboardShortcut(
+            keyCode: 55,
+            modifierFlags: NSEvent.ModifierFlags.command.rawValue,
+            modifierOnly: true
+        )
+        let leftShift = KeyboardShortcut(
+            keyCode: 56,
+            modifierFlags: NSEvent.ModifierFlags.shift.rawValue,
+            modifierOnly: true
+        )
+
+        press(leftCommand, id: commandID)
+        if direction == .previous {
+            press(leftShift, id: shiftID)
+        }
+        tapGlobal(KeyboardShortcut(keyCode: 48, modifierFlags: 0, modifierOnly: false))
+
+        Task { [weak self] in
+            // A physical Command-Tab selection is committed by releasing the
+            // modifier, not by pressing Return in the system switcher overlay.
+            try? await Task.sleep(for: .milliseconds(90))
+            self?.release(id: shiftID)
+            self?.release(id: commandID)
+        }
+    }
+
     private func tap(_ shortcut: KeyboardShortcut, targetPID: pid_t?) {
         guard isAccessibilityTrusted else { return }
         let events = planner.tap(shortcut, targetPID: targetPID)

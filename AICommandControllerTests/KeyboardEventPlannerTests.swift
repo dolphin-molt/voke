@@ -60,6 +60,25 @@ final class KeyboardEventPlannerTests: XCTestCase {
         XCTAssertEqual(planner.activeCount, 0)
         XCTAssertTrue(planner.repeatPulse(id: "zr").isEmpty)
     }
+
+    func testAppSwitcherSequenceEndsWithCommandReleased() throws {
+        var planner = KeyboardEventPlanner()
+        let command = KeyboardShortcut(
+            keyCode: 55,
+            modifierFlags: NSEvent.ModifierFlags.command.rawValue,
+            modifierOnly: true
+        )
+        let tab = KeyboardShortcut(keyCode: 48, modifierFlags: 0, modifierOnly: false)
+
+        _ = planner.press(command, id: "command", targetPID: nil)
+        let tabEvents = planner.tap(tab, targetPID: nil)
+        XCTAssertEqual(tabEvents.map(\.flags), [NSEvent.ModifierFlags.command.rawValue, NSEvent.ModifierFlags.command.rawValue])
+
+        let commandUp = try XCTUnwrap(planner.release(id: "command"))
+        XCTAssertFalse(commandUp.keyDown)
+        XCTAssertEqual(commandUp.flags, 0)
+        XCTAssertEqual(planner.activeCount, 0)
+    }
 }
 
 final class StickDirectionResolverTests: XCTestCase {
