@@ -223,15 +223,6 @@ final class AppModel: ObservableObject {
                     addEvent("\(control.rawValue) → \(shortcut.displayName) UP")
                 }
             }
-        case .inputSource:
-            guard pressed else { return }
-            guard keyboard.isAccessibilityTrusted else {
-                addEvent("\(control.rawValue) 被阻止 · 需要辅助功能权限")
-                keyboard.requestAccessibilityPermission()
-                return
-            }
-            keyboard.tapGlobal(.switchInputSource)
-            addEvent("\(control.rawValue) → 切换输入法")
         case .shell:
             guard pressed else { return }
             let command = mapping.shellCommand.trimmingCharacters(in: .whitespacesAndNewlines)

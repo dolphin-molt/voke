@@ -117,8 +117,6 @@ struct MappingStudio: View {
                     emptyState
                 case .shortcut:
                     shortcutEditor
-                case .inputSource:
-                    inputSourceEditor
                 case .shell:
                     shellEditor
                 }
@@ -272,26 +270,6 @@ struct MappingStudio: View {
                 .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.secondary)
         }
-    }
-
-    private var inputSourceEditor: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "globe")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(accent)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("切换中英文输入法")
-                    .font(.system(size: 12, weight: .semibold))
-                Text("通过 macOS 的“选择上一个输入源”系统快捷键执行，效果对应苹果键盘的中/英或地球键。")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(field)
-        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 
     private var currentResult: some View {

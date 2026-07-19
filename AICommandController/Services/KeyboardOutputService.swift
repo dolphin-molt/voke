@@ -36,15 +36,6 @@ final class KeyboardOutputService: ObservableObject {
         }
     }
 
-    func tapGlobal(_ shortcut: KeyboardShortcut) {
-        guard isAccessibilityTrusted else { return }
-        post(shortcut, keyDown: true, targetPID: nil)
-        Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(60))
-            self?.post(shortcut, keyDown: false, targetPID: nil)
-        }
-    }
-
     func resolvedDisplayName(for shortcut: KeyboardShortcut) -> String {
         guard !shortcut.modifierOnly else { return shortcut.displayName }
         var resolved = shortcut
@@ -98,13 +89,13 @@ final class KeyboardOutputService: ObservableObject {
             // release is removed first. This makes flagsChanged describe the
             // modifier state that should exist after the event.
             flags = keyDown
-                ? activeModifierEventFlags | modifierEventFlags(for: shortcut)
-                : activeModifierEventFlags
+                ? activeModifierFlags | shortcut.modifierFlags
+                : activeModifierFlags
         } else {
             // Events posted directly to a target PID do not automatically inherit
             // modifiers posted through the HID tap. Carry all controller-held
             // modifiers explicitly so ZR(Command) + A becomes a real Command-A.
-            flags = activeModifierEventFlags | shortcut.modifierFlags
+            flags = activeModifierFlags | shortcut.modifierFlags
         }
         event.flags = CGEventFlags(rawValue: UInt64(flags))
         if let targetPID {
@@ -119,31 +110,5 @@ final class KeyboardOutputService: ObservableObject {
             guard output.shortcut.modifierOnly else { return }
             flags |= output.shortcut.modifierFlags
         }
-    }
-
-    private var activeModifierEventFlags: UInt {
-        activeShortcuts.values.reduce(into: UInt(0)) { flags, output in
-            guard output.shortcut.modifierOnly else { return }
-            flags |= modifierEventFlags(for: output.shortcut)
-        }
-    }
-
-    private func modifierEventFlags(for shortcut: KeyboardShortcut) -> UInt {
-        // Device-dependent bits preserve the physical side of a modifier.
-        // Some global hotkey tools distinguish right Command from left Command
-        // using these flags rather than the device-independent mask alone.
-        let sideMask: UInt
-        switch shortcut.keyCode {
-        case 54: sideMask = 0x00000010 // right Command
-        case 55: sideMask = 0x00000008 // left Command
-        case 56: sideMask = 0x00000002 // left Shift
-        case 60: sideMask = 0x00000004 // right Shift
-        case 58: sideMask = 0x00000020 // left Option
-        case 61: sideMask = 0x00000040 // right Option
-        case 59: sideMask = 0x00000001 // left Control
-        case 62: sideMask = 0x00002000 // right Control
-        default: sideMask = 0
-        }
-        return shortcut.modifierFlags | sideMask
     }
 }
