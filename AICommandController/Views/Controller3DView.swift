@@ -84,10 +84,10 @@ struct Controller3DView: NSViewRepresentable {
                 node.geometry?.firstMaterial?.emission.contents = active ? color.withAlphaComponent(0.52) : NSColor.black
             }
 
-            moveStick("LEFT_STICK", origin: SCNVector3(-1.48, 0.48, 0.58), value: leftStick)
-            moveStick("RIGHT_STICK", origin: SCNVector3(0.95, -0.62, 0.58), value: rightStick)
-            controlNodes["ZL"]?.position.z = -0.32 - CGFloat(leftTrigger) * 0.10
-            controlNodes["ZR"]?.position.z = -0.32 - CGFloat(rightTrigger) * 0.10
+            moveStick("LEFT_STICK", origin: SCNVector3(-1.36, 0.52, 0.49), value: leftStick)
+            moveStick("RIGHT_STICK", origin: SCNVector3(0.72, -0.26, 0.49), value: rightStick)
+            controlNodes["ZL"]?.position.z = -0.30 - CGFloat(leftTrigger) * 0.10
+            controlNodes["ZR"]?.position.z = -0.30 - CGFloat(rightTrigger) * 0.10
 
             SCNTransaction.commit()
         }
@@ -99,9 +99,9 @@ struct Controller3DView: NSViewRepresentable {
                 metalness: 0.14
             )
             let faceMaterial = material(
-                diffuse: NSColor(red: 0.115, green: 0.125, blue: 0.14, alpha: 1),
-                roughness: 0.35,
-                metalness: 0.22
+                diffuse: NSColor(red: 0.155, green: 0.16, blue: 0.17, alpha: 1),
+                roughness: 0.48,
+                metalness: 0.12
             )
             let gripMaterial = material(
                 diffuse: NSColor(red: 0.055, green: 0.06, blue: 0.07, alpha: 1),
@@ -109,81 +109,61 @@ struct Controller3DView: NSViewRepresentable {
                 metalness: 0.04
             )
 
-            let leftGrip = capsule(radius: 0.59, height: 2.55, material: gripMaterial)
-            leftGrip.position = SCNVector3(-1.72, -0.52, -0.42)
-            leftGrip.eulerAngles = SCNVector3(0.04, 0, -0.23)
-            leftGrip.scale.z = 1.16
-            modelRoot.addChildNode(leftGrip)
-
-            let rightGrip = capsule(radius: 0.59, height: 2.55, material: gripMaterial)
-            rightGrip.position = SCNVector3(1.72, -0.52, -0.42)
-            rightGrip.eulerAngles = SCNVector3(0.04, 0, 0.23)
-            rightGrip.scale.z = 1.16
-            modelRoot.addChildNode(rightGrip)
-
-            let rear = extrudedShell(scale: 1.0, depth: 0.72, chamfer: 0.24, material: rearMaterial)
-            rear.position.z = -0.58
+            let rear = extrudedSilhouette(scale: 1.0, depth: 0.66, chamfer: 0.18, material: rearMaterial)
+            rear.position.z = -0.48
             modelRoot.addChildNode(rear)
+            addIntegratedGrip(left: true, material: rearMaterial, z: -0.20)
+            addIntegratedGrip(left: false, material: rearMaterial, z: -0.20)
 
-            let face = extrudedShell(scale: 0.94, depth: 0.20, chamfer: 0.14, material: faceMaterial)
-            face.position.z = 0.22
+            let face = extrudedSilhouette(scale: 0.975, depth: 0.14, chamfer: 0.10, material: faceMaterial)
+            face.position.z = 0.20
             modelRoot.addChildNode(face)
+            addIntegratedGrip(left: true, material: gripMaterial, z: -0.01)
+            addIntegratedGrip(left: false, material: gripMaterial, z: -0.01)
 
-            let centerPlate = SCNNode(geometry: SCNBox(width: 1.34, height: 1.28, length: 0.12, chamferRadius: 0.26))
-            centerPlate.geometry?.firstMaterial = material(
-                diffuse: NSColor(red: 0.075, green: 0.082, blue: 0.092, alpha: 1),
-                roughness: 0.30,
-                metalness: 0.36
-            )
-            centerPlate.position = SCNVector3(0, 0.05, 0.43)
-            modelRoot.addChildNode(centerPlate)
+            addGripSeam(left: true, material: gripMaterial)
+            addGripSeam(left: false, material: gripMaterial)
 
             let usbPort = SCNNode(geometry: SCNBox(width: 0.48, height: 0.13, length: 0.12, chamferRadius: 0.05))
             usbPort.geometry?.firstMaterial = material(diffuse: .black, roughness: 0.75, metalness: 0.18)
             usbPort.position = SCNVector3(0, 1.46, -0.52)
             modelRoot.addChildNode(usbPort)
 
-            for x in [-0.18, -0.06, 0.06, 0.18] as [Float] {
-                let led = SCNNode(geometry: SCNSphere(radius: 0.027))
-                led.geometry?.firstMaterial = material(diffuse: cyan.withAlphaComponent(0.65), roughness: 0.2, metalness: 0.1, emission: cyan.withAlphaComponent(0.30))
-                led.position = SCNVector3(x, -0.50, 0.56)
-                modelRoot.addChildNode(led)
-            }
         }
 
         private func addFaceControls() {
-            addStick(name: "LEFT_STICK", buttonName: "L3", position: SCNVector3(-1.48, 0.48, 0.58))
-            addDPad(position: SCNVector3(-1.30, -0.63, 0.59))
-            addStick(name: "RIGHT_STICK", buttonName: "R3", position: SCNVector3(0.95, -0.62, 0.58))
+            addStick(name: "LEFT_STICK", buttonName: "L3", position: SCNVector3(-1.36, 0.52, 0.49))
+            addDPad(position: SCNVector3(-1.18, -0.28, 0.50))
+            addStick(name: "RIGHT_STICK", buttonName: "R3", position: SCNVector3(0.72, -0.26, 0.49))
 
             // Nintendo layout: X top, Y left, A right, B bottom.
-            addRoundButton("X", position: SCNVector3(1.55, 0.82, 0.61), radius: 0.245)
-            addRoundButton("Y", position: SCNVector3(1.14, 0.43, 0.61), radius: 0.245)
-            addRoundButton("A", position: SCNVector3(1.96, 0.43, 0.61), radius: 0.245)
-            addRoundButton("B", position: SCNVector3(1.55, 0.04, 0.61), radius: 0.245)
+            addRoundButton("X", position: SCNVector3(1.50, 0.72, 0.51), radius: 0.225)
+            addRoundButton("Y", position: SCNVector3(1.16, 0.39, 0.51), radius: 0.225)
+            addRoundButton("A", position: SCNVector3(1.84, 0.39, 0.51), radius: 0.225)
+            addRoundButton("B", position: SCNVector3(1.50, 0.06, 0.51), radius: 0.225)
         }
 
         private func addCenterControls() {
-            addSymbolButton("−", position: SCNVector3(-0.56, 0.78, 0.57), width: 0.34, height: 0.13)
-            addSymbolButton("+", position: SCNVector3(0.56, 0.78, 0.57), width: 0.34, height: 0.13)
-            addRoundButton("HOME", position: SCNVector3(0.48, -0.16, 0.57), radius: 0.19, height: 0.11, label: "⌂")
-            addSymbolButton("CAPTURE", position: SCNVector3(-0.48, -0.16, 0.57), width: 0.29, height: 0.29, label: "□")
+            addSymbolButton("−", position: SCNVector3(-0.58, 0.79, 0.50), width: 0.31, height: 0.12)
+            addSymbolButton("+", position: SCNVector3(0.55, 0.79, 0.50), width: 0.31, height: 0.12)
+            addRoundButton("HOME", position: SCNVector3(0.36, 0.34, 0.50), radius: 0.16, height: 0.10, label: "⌂")
+            addSymbolButton("CAPTURE", position: SCNVector3(-0.40, 0.34, 0.50), width: 0.25, height: 0.25, label: "□")
 
         }
 
         private func addTriggers() {
-            addTrigger("ZL", position: SCNVector3(-1.76, 1.27, -0.32))
-            addTrigger("ZR", position: SCNVector3(1.76, 1.27, -0.32))
+            addTrigger("ZL", position: SCNVector3(-1.62, 1.24, -0.30))
+            addTrigger("ZR", position: SCNVector3(1.62, 1.24, -0.30))
 
             let leftShoulder = SCNNode(geometry: SCNBox(width: 0.92, height: 0.20, length: 0.36, chamferRadius: 0.10))
             leftShoulder.geometry?.firstMaterial = material(diffuse: buttonBlack, roughness: 0.45, metalness: 0.12)
-            leftShoulder.position = SCNVector3(-0.90, 1.35, -0.34)
+            leftShoulder.position = SCNVector3(-0.92, 1.30, -0.30)
             modelRoot.addChildNode(leftShoulder)
             controlNodes["L"] = leftShoulder
 
             let rightShoulder = SCNNode(geometry: SCNBox(width: 0.92, height: 0.20, length: 0.36, chamferRadius: 0.10))
             rightShoulder.geometry?.firstMaterial = material(diffuse: buttonBlack, roughness: 0.45, metalness: 0.12)
-            rightShoulder.position = SCNVector3(0.90, 1.35, -0.34)
+            rightShoulder.position = SCNVector3(0.92, 1.30, -0.30)
             modelRoot.addChildNode(rightShoulder)
             controlNodes["R"] = rightShoulder
         }
@@ -282,16 +262,12 @@ struct Controller3DView: NSViewRepresentable {
         }
 
         private func addTrigger(_ name: String, position: SCNVector3) {
-            let node = SCNNode(geometry: SCNBox(width: 1.20, height: 0.38, length: 0.58, chamferRadius: 0.16))
+            let node = SCNNode(geometry: SCNBox(width: 0.82, height: 0.22, length: 0.40, chamferRadius: 0.11))
             node.geometry?.firstMaterial = material(diffuse: buttonBlack, roughness: 0.38, metalness: 0.16)
             node.position = position
             modelRoot.addChildNode(node)
             controlNodes[name] = node
 
-            let label = textNode(name, color: NSColor.white.withAlphaComponent(0.55), fontSize: 64)
-            label.scale = SCNVector3(0.0025, 0.0025, 0.0025)
-            label.position = SCNVector3(position.x, position.y - 0.04, position.z + 0.31)
-            modelRoot.addChildNode(label)
         }
 
         private func moveStick(_ name: String, origin: SCNVector3, value: CGPoint) {
@@ -301,17 +277,17 @@ struct Controller3DView: NSViewRepresentable {
             node.position = SCNVector3(x, y, origin.z)
         }
 
-        private func extrudedShell(scale: CGFloat, depth: CGFloat, chamfer: CGFloat, material: SCNMaterial) -> SCNNode {
+        private func extrudedSilhouette(scale: CGFloat, depth: CGFloat, chamfer: CGFloat, material: SCNMaterial) -> SCNNode {
             let path = NSBezierPath()
-            path.move(to: NSPoint(x: -1.66 * scale, y: 1.32 * scale))
-            path.curve(to: NSPoint(x: -2.42 * scale, y: 0.78 * scale), controlPoint1: NSPoint(x: -2.16 * scale, y: 1.28 * scale), controlPoint2: NSPoint(x: -2.36 * scale, y: 1.05 * scale))
-            path.curve(to: NSPoint(x: -2.10 * scale, y: -1.02 * scale), controlPoint1: NSPoint(x: -2.62 * scale, y: 0.08 * scale), controlPoint2: NSPoint(x: -2.55 * scale, y: -0.72 * scale))
-            path.curve(to: NSPoint(x: -1.38 * scale, y: -0.58 * scale), controlPoint1: NSPoint(x: -1.82 * scale, y: -1.18 * scale), controlPoint2: NSPoint(x: -1.62 * scale, y: -0.72 * scale))
-            path.curve(to: NSPoint(x: 1.38 * scale, y: -0.58 * scale), controlPoint1: NSPoint(x: -0.62 * scale, y: -0.82 * scale), controlPoint2: NSPoint(x: 0.62 * scale, y: -0.82 * scale))
-            path.curve(to: NSPoint(x: 2.10 * scale, y: -1.02 * scale), controlPoint1: NSPoint(x: 1.62 * scale, y: -0.72 * scale), controlPoint2: NSPoint(x: 1.82 * scale, y: -1.18 * scale))
-            path.curve(to: NSPoint(x: 2.42 * scale, y: 0.78 * scale), controlPoint1: NSPoint(x: 2.55 * scale, y: -0.72 * scale), controlPoint2: NSPoint(x: 2.62 * scale, y: 0.08 * scale))
-            path.curve(to: NSPoint(x: 1.66 * scale, y: 1.32 * scale), controlPoint1: NSPoint(x: 2.36 * scale, y: 1.05 * scale), controlPoint2: NSPoint(x: 2.16 * scale, y: 1.28 * scale))
-            path.curve(to: NSPoint(x: -1.66 * scale, y: 1.32 * scale), controlPoint1: NSPoint(x: 0.75 * scale, y: 1.48 * scale), controlPoint2: NSPoint(x: -0.75 * scale, y: 1.48 * scale))
+            path.move(to: NSPoint(x: -1.38 * scale, y: 1.24 * scale))
+            path.curve(to: NSPoint(x: -2.14 * scale, y: 0.92 * scale), controlPoint1: NSPoint(x: -1.78 * scale, y: 1.27 * scale), controlPoint2: NSPoint(x: -2.00 * scale, y: 1.14 * scale))
+            path.curve(to: NSPoint(x: -2.16 * scale, y: -0.50 * scale), controlPoint1: NSPoint(x: -2.38 * scale, y: 0.50 * scale), controlPoint2: NSPoint(x: -2.36 * scale, y: -0.18 * scale))
+            path.curve(to: NSPoint(x: -1.08 * scale, y: -0.58 * scale), controlPoint1: NSPoint(x: -1.82 * scale, y: -0.62 * scale), controlPoint2: NSPoint(x: -1.38 * scale, y: -0.60 * scale))
+            path.curve(to: NSPoint(x: 1.08 * scale, y: -0.58 * scale), controlPoint1: NSPoint(x: -0.55 * scale, y: -0.52 * scale), controlPoint2: NSPoint(x: 0.55 * scale, y: -0.52 * scale))
+            path.curve(to: NSPoint(x: 2.16 * scale, y: -0.50 * scale), controlPoint1: NSPoint(x: 1.38 * scale, y: -0.60 * scale), controlPoint2: NSPoint(x: 1.82 * scale, y: -0.62 * scale))
+            path.curve(to: NSPoint(x: 2.14 * scale, y: 0.92 * scale), controlPoint1: NSPoint(x: 2.40 * scale, y: -0.16 * scale), controlPoint2: NSPoint(x: 2.42 * scale, y: 0.46 * scale))
+            path.curve(to: NSPoint(x: 1.38 * scale, y: 1.24 * scale), controlPoint1: NSPoint(x: 2.00 * scale, y: 1.14 * scale), controlPoint2: NSPoint(x: 1.78 * scale, y: 1.27 * scale))
+            path.curve(to: NSPoint(x: -1.38 * scale, y: 1.24 * scale), controlPoint1: NSPoint(x: 0.62 * scale, y: 1.35 * scale), controlPoint2: NSPoint(x: -0.62 * scale, y: 1.35 * scale))
             path.close()
 
             let geometry = SCNShape(path: path, extrusionDepth: depth)
@@ -319,6 +295,22 @@ struct Controller3DView: NSViewRepresentable {
             geometry.chamferMode = .both
             geometry.firstMaterial = material
             return SCNNode(geometry: geometry)
+        }
+
+        private func addIntegratedGrip(left: Bool, material: SCNMaterial, z: CGFloat) {
+            let grip = capsule(radius: 0.61, height: 2.45, material: material)
+            grip.position = SCNVector3(left ? -1.72 : 1.72, -0.54, z)
+            grip.eulerAngles.z = left ? -0.17 : 0.17
+            grip.scale.z = 0.76
+            modelRoot.addChildNode(grip)
+        }
+
+        private func addGripSeam(left: Bool, material: SCNMaterial) {
+            let seam = SCNNode(geometry: SCNBox(width: 1.02, height: 0.022, length: 0.022, chamferRadius: 0.007))
+            seam.geometry?.firstMaterial = material
+            seam.position = SCNVector3(left ? -1.66 : 1.66, -0.20, 0.39)
+            seam.eulerAngles.z = left ? -0.56 : 0.56
+            modelRoot.addChildNode(seam)
         }
 
         private func capsule(radius: CGFloat, height: CGFloat, material: SCNMaterial) -> SCNNode {
