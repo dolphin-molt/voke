@@ -89,7 +89,7 @@ final class KeyboardOutputService: ObservableObject {
             // release is removed first. This makes flagsChanged describe the
             // modifier state that should exist after the event.
             flags = keyDown
-                ? activeModifierFlags | shortcut.modifierFlags
+                ? activeModifierFlags | shortcut.modifierFlags | modifierSideFlag(for: shortcut.keyCode)
                 : activeModifierFlags
         } else {
             // Events posted directly to a target PID do not automatically inherit
@@ -109,6 +109,23 @@ final class KeyboardOutputService: ObservableObject {
         activeShortcuts.values.reduce(into: UInt(0)) { flags, output in
             guard output.shortcut.modifierOnly else { return }
             flags |= output.shortcut.modifierFlags
+        }
+    }
+
+    private func modifierSideFlag(for keyCode: UInt16) -> UInt {
+        // macOS carries a device-dependent bit in modifier events to distinguish
+        // the left and right physical keys. Keep this on flagsChanged only; normal
+        // A/C/V events continue to receive the portable modifier mask above.
+        switch keyCode {
+        case 54: 0x00000010 // right Command
+        case 55: 0x00000008 // left Command
+        case 56: 0x00000002 // left Shift
+        case 60: 0x00000004 // right Shift
+        case 58: 0x00000020 // left Option
+        case 61: 0x00000040 // right Option
+        case 59: 0x00000001 // left Control
+        case 62: 0x00002000 // right Control
+        default: 0
         }
     }
 }
