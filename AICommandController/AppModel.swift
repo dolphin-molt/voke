@@ -328,7 +328,7 @@ final class AppModel: ObservableObject {
             return "- \($0.date.formatted(.iso8601)): \(message)"
         }
         return ([
-            "AI Command Controller 诊断",
+            "Voke 诊断",
             "generatedAt: \(Date().formatted(.iso8601))",
             "appVersion: \(shortVersion) (\(buildVersion))",
             "bundleID: \(bundleIdentifier)",

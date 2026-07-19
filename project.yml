@@ -26,14 +26,14 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dolphin.ai-command-controller
-        PRODUCT_NAME: AI Command Controller
+        PRODUCT_NAME: Voke
         PRODUCT_MODULE_NAME: AICommandController
         CODE_SIGN_STYLE: Automatic
         ENABLE_APP_SANDBOX: NO
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: AI Command Controller
+        INFOPLIST_KEY_CFBundleDisplayName: Voke
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
-        INFOPLIST_KEY_NSMicrophoneUsageDescription: AI Command Controller 需要识别和使用你选择的语音输入设备。
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Voke 需要识别和使用你选择的语音输入设备。
         MARKETING_VERSION: 0.3.1
         CURRENT_PROJECT_VERSION: 6
   AICommandControllerTests:
@@ -47,5 +47,5 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dolphin.ai-command-controller.tests
         GENERATE_INFOPLIST_FILE: YES
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/AI Command Controller.app/Contents/MacOS/AI Command Controller"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Voke.app/Contents/MacOS/Voke"
         BUNDLE_LOADER: "$(TEST_HOST)"

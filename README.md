@@ -1,4 +1,4 @@
-# AI Command Controller
+# Voke
 
 把游戏手柄变成通用的 macOS 动作控制台：每个按钮和摇杆方向都可以映射成键盘操作、组合键、页面滚动、App 切换或终端命令。
 
@@ -43,7 +43,7 @@ xcodebuild -project AICommandController.xcodeproj -scheme AICommandController -c
 xcodebuild test -project AICommandController.xcodeproj -scheme AICommandController -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO
 ```
 
-首次发送快捷键前，需要在“系统设置 → 隐私与安全性 → 辅助功能”中允许 AI Command Controller。
+首次发送快捷键前，需要在“系统设置 → 隐私与安全性 → 辅助功能”中允许 Voke。
 应用启动时会自动触发系统授权提示，但 macOS 不允许应用代替用户打开权限开关；未授权时可通过应用内按钮直达对应设置页。
 
 外接小键盘还需要“系统设置 → 隐私与安全性 → 输入监控”权限。当前使用监听模式：映射动作会执行，但小键盘本来的按键仍会同时传给前台应用，不会被拦截或吞掉。

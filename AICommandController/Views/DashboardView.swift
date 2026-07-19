@@ -67,10 +67,10 @@ struct DashboardView: View {
             .frame(width: 38, height: 38)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Controller Studio")
+                Text("Voke")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                 if !compact {
-                    Text("把手柄变成你的快捷键")
+                    Text("Make every input yours.")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
                 }

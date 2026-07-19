@@ -313,9 +313,9 @@
 				CURRENT_PROJECT_VERSION = 6;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "AI Command Controller";
+				INFOPLIST_KEY_CFBundleDisplayName = Voke;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "AI Command Controller 需要识别和使用你选择的语音输入设备。";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voke 需要识别和使用你选择的语音输入设备。";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -323,7 +323,7 @@
 				MARKETING_VERSION = 0.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dolphin.ai-command-controller";
 				PRODUCT_MODULE_NAME = AICommandController;
-				PRODUCT_NAME = "AI Command Controller";
+				PRODUCT_NAME = Voke;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -341,7 +341,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dolphin.ai-command-controller.tests";
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AI Command Controller.app/Contents/MacOS/AI Command Controller";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Voke.app/Contents/MacOS/Voke";
 			};
 			name = Debug;
 		};
@@ -358,7 +358,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dolphin.ai-command-controller.tests";
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AI Command Controller.app/Contents/MacOS/AI Command Controller";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Voke.app/Contents/MacOS/Voke";
 			};
 			name = Release;
 		};
@@ -371,9 +371,9 @@
 				CURRENT_PROJECT_VERSION = 6;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "AI Command Controller";
+				INFOPLIST_KEY_CFBundleDisplayName = Voke;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "AI Command Controller 需要识别和使用你选择的语音输入设备。";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Voke 需要识别和使用你选择的语音输入设备。";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -381,7 +381,7 @@
 				MARKETING_VERSION = 0.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dolphin.ai-command-controller";
 				PRODUCT_MODULE_NAME = AICommandController;
-				PRODUCT_NAME = "AI Command Controller";
+				PRODUCT_NAME = Voke;
 				SDKROOT = macosx;
 			};
 			name = Release;
