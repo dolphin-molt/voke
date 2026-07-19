@@ -199,12 +199,12 @@ final class AppModel: ObservableObject {
             case .tap:
                 if pressed {
                     keyboard.tap(shortcut)
-                    addEvent("\(control.rawValue) → \(shortcut.displayName)")
+                    addEvent("\(control.rawValue) → \(shortcut.displayName) @ \(activeApplication)")
                 }
             case .hold:
                 if pressed {
                     keyboard.press(shortcut, id: outputID)
-                    addEvent("\(control.rawValue) → \(shortcut.displayName) DOWN")
+                    addEvent("\(control.rawValue) → \(shortcut.displayName) DOWN @ \(activeApplication)")
                 } else {
                     keyboard.release(id: outputID)
                     addEvent("\(control.rawValue) → \(shortcut.displayName) UP")

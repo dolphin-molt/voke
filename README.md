@@ -41,3 +41,5 @@ xcodebuild -project AICommandController.xcodeproj -scheme AICommandController -c
 应用默认处于 SAFE 模式，只监听手柄，不执行任何映射。主动开启 OUTPUT 后才允许执行快捷键和终端命令。任何断连、关闭或退出都会释放仍处于按下状态的键，避免修饰键卡住。
 
 键盘快捷键需要 macOS 辅助功能权限；终端命令不依赖该权限。终端动作拥有当前用户权限，请只配置你理解并信任的命令。单独的 Command、Shift、Option、Control 使用 macOS `flagsChanged` 事件，左右修饰键可以分别录制。
+
+普通按键和组合键会直接投递给当前前台应用；单独的修饰键使用系统级投递。“点按一次”会保持 60ms 的按下时间，兼容 Electron 和 Web 输入框。
