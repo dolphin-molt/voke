@@ -40,6 +40,10 @@ final class AppModel: ObservableObject {
     func start() {
         guard !started else { return }
         started = true
+        // Since macOS 11.3, GameController stops delivering input while the app
+        // is not frontmost unless background monitoring is explicitly enabled.
+        // This app is designed to control whichever application is in front.
+        GCController.shouldMonitorBackgroundEvents = true
         refreshAudio()
         refreshActiveApplication()
         observeControllers()
