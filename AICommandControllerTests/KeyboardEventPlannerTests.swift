@@ -61,7 +61,7 @@ final class KeyboardEventPlannerTests: XCTestCase {
         XCTAssertTrue(planner.repeatPulse(id: "zr").isEmpty)
     }
 
-    func testAppSwitcherSequenceEndsWithCommandReleased() throws {
+    func testAppSwitcherKeepsCommandHeldUntilConfirmation() throws {
         var planner = KeyboardEventPlanner()
         let command = KeyboardShortcut(
             keyCode: 55,
@@ -73,7 +73,10 @@ final class KeyboardEventPlannerTests: XCTestCase {
         _ = planner.press(command, id: "command", targetPID: nil)
         let tabEvents = planner.tap(tab, targetPID: nil)
         XCTAssertEqual(tabEvents.map(\.flags), [NSEvent.ModifierFlags.command.rawValue, NSEvent.ModifierFlags.command.rawValue])
+        XCTAssertEqual(planner.activeCount, 1)
 
+        // An R3 Return confirmation is implemented by releasing Command,
+        // which is how the native macOS app switcher commits its selection.
         let commandUp = try XCTUnwrap(planner.release(id: "command"))
         XCTAssertFalse(commandUp.keyDown)
         XCTAssertEqual(commandUp.flags, 0)

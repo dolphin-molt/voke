@@ -315,6 +315,10 @@ final class AppModel: ObservableObject {
                 }
                 return
             }
+            if pressed, keyboard.commitApplicationSwitchIfActive(using: shortcut) {
+                addEvent("\(control.rawValue) → 确认 App 选择")
+                return
+            }
             switch mapping.triggerBehavior {
             case .tap:
                 if pressed {
@@ -355,7 +359,7 @@ final class AppModel: ObservableObject {
                 return
             }
             let direction = mapping.appSwitchDirection ?? .next
-            keyboard.switchApplication(direction)
+            keyboard.showApplicationSwitcher(direction)
             addEvent("\(control.rawValue) → \(direction.title)")
         case .shell:
             guard pressed else { return }

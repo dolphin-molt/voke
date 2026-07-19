@@ -83,7 +83,7 @@ enum AppSwitchDirection: String, Codable, CaseIterable, Identifiable {
     case previous, next
 
     var id: String { rawValue }
-    var title: String { self == .previous ? "上一个 App" : "下一个 App" }
+    var title: String { self == .previous ? "向左选择" : "向右选择" }
 }
 
 enum TriggerBehavior: String, Codable, CaseIterable, Identifiable {

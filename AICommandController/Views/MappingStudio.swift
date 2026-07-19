@@ -302,7 +302,7 @@ struct MappingStudio: View {
             }
             .labelsHidden()
             .pickerStyle(.segmented)
-            Label("使用 macOS 最近使用顺序，并把切换后的 App 窗口带到前台。", systemImage: "macwindow.on.rectangle")
+            Label("打开系统切换条；继续拨动选择，按映射为回车的按钮确认。", systemImage: "macwindow.on.rectangle")
                 .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.secondary)
         }

@@ -7,6 +7,8 @@ final class KeyboardOutputService: ObservableObject {
     @Published private(set) var activeOutputCount = 0
     private var planner = KeyboardEventPlanner()
     private var repeatTasks: [String: Task<Void, Never>] = [:]
+    private let appSwitchCommandID = "system.app-switch.command"
+    private let appSwitchShiftID = "system.app-switch.shift"
 
     var isAccessibilityTrusted: Bool {
         AXIsProcessTrusted()
@@ -30,10 +32,8 @@ final class KeyboardOutputService: ObservableObject {
         tap(shortcut, targetPID: nil)
     }
 
-    func switchApplication(_ direction: AppSwitchDirection) {
+    func showApplicationSwitcher(_ direction: AppSwitchDirection) {
         guard isAccessibilityTrusted else { return }
-        let commandID = "system.app-switch.command"
-        let shiftID = "system.app-switch.shift"
         let leftCommand = KeyboardShortcut(
             keyCode: 55,
             modifierFlags: NSEvent.ModifierFlags.command.rawValue,
@@ -45,19 +45,27 @@ final class KeyboardOutputService: ObservableObject {
             modifierOnly: true
         )
 
-        press(leftCommand, id: commandID)
+        press(leftCommand, id: appSwitchCommandID)
         if direction == .previous {
-            press(leftShift, id: shiftID)
+            press(leftShift, id: appSwitchShiftID)
         }
         tapGlobal(KeyboardShortcut(keyCode: 48, modifierFlags: 0, modifierOnly: false))
 
-        Task { [weak self] in
-            // A physical Command-Tab selection is committed by releasing the
-            // modifier, not by pressing Return in the system switcher overlay.
-            try? await Task.sleep(for: .milliseconds(90))
-            self?.release(id: shiftID)
-            self?.release(id: commandID)
+        if direction == .previous {
+            Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(70))
+                guard let self else { return }
+                self.release(id: self.appSwitchShiftID)
+            }
         }
+    }
+
+    func commitApplicationSwitchIfActive(using shortcut: KeyboardShortcut) -> Bool {
+        let isReturn = shortcut.keyCode == 36 || shortcut.keyCode == 76
+        guard isReturn, planner.contains(appSwitchCommandID) else { return false }
+        release(id: appSwitchShiftID)
+        release(id: appSwitchCommandID)
+        return true
     }
 
     private func tap(_ shortcut: KeyboardShortcut, targetPID: pid_t?) {
