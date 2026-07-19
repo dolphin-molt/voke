@@ -82,7 +82,7 @@ final class KeyboardOutputService: ObservableObject {
                 // then send a fresh repeat keyDown so text fields and editors see
                 // the same discrete input cadence as a physical keyboard.
                 self.post(output.shortcut, keyDown: false, targetPID: output.targetPID)
-                self.post(output.shortcut, keyDown: true, targetPID: output.targetPID, isRepeat: true)
+                self.post(output.shortcut, keyDown: true, targetPID: output.targetPID)
                 try? await Task.sleep(for: .seconds(NSEvent.keyRepeatInterval))
             }
         }
@@ -96,7 +96,7 @@ final class KeyboardOutputService: ObservableObject {
         return app.processIdentifier
     }
 
-    private func post(_ shortcut: KeyboardShortcut, keyDown: Bool, targetPID: pid_t?, isRepeat: Bool = false) {
+    private func post(_ shortcut: KeyboardShortcut, keyDown: Bool, targetPID: pid_t?) {
         guard let source = CGEventSource(stateID: .combinedSessionState),
               let event = CGEvent(
                 keyboardEventSource: source,
@@ -122,9 +122,6 @@ final class KeyboardOutputService: ObservableObject {
             flags = activeModifierFlags | shortcut.modifierFlags
         }
         event.flags = CGEventFlags(rawValue: UInt64(flags))
-        if isRepeat {
-            event.setIntegerValueField(.keyboardEventAutorepeat, value: 1)
-        }
         if let targetPID {
             event.postToPid(targetPID)
         } else {
