@@ -30,12 +30,19 @@ final class AppModel: ObservableObject {
     private var observers: [NSObjectProtocol] = []
     private var audioTimer: Timer?
     private var appTimer: Timer?
+    private var cancellables: Set<AnyCancellable> = []
     private var started = false
 
     var inputDevices: [AudioDeviceInfo] { audioDevices.filter(\.hasInput) }
     var outputDevices: [AudioDeviceInfo] { audioDevices.filter(\.hasOutput) }
     var defaultInput: AudioDeviceInfo? { inputDevices.first(where: \.isDefaultInput) }
     var defaultOutput: AudioDeviceInfo? { outputDevices.first(where: \.isDefaultOutput) }
+
+    init() {
+        mappingStore.objectWillChange
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+    }
 
     func start() {
         guard !started else { return }
@@ -202,13 +209,15 @@ final class AppModel: ObservableObject {
             switch mapping.triggerBehavior {
             case .tap:
                 if pressed {
+                    let resolvedName = keyboard.resolvedDisplayName(for: shortcut)
                     keyboard.tap(shortcut)
-                    addEvent("\(control.rawValue) → \(shortcut.displayName) @ \(activeApplication)")
+                    addEvent("\(control.rawValue) → \(resolvedName) @ \(activeApplication)")
                 }
             case .hold:
                 if pressed {
+                    let resolvedName = keyboard.resolvedDisplayName(for: shortcut)
                     keyboard.press(shortcut, id: outputID)
-                    addEvent("\(control.rawValue) → \(shortcut.displayName) DOWN @ \(activeApplication)")
+                    addEvent("\(control.rawValue) → \(resolvedName) DOWN @ \(activeApplication)")
                 } else {
                     keyboard.release(id: outputID)
                     addEvent("\(control.rawValue) → \(shortcut.displayName) UP")

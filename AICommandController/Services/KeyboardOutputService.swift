@@ -36,6 +36,13 @@ final class KeyboardOutputService: ObservableObject {
         }
     }
 
+    func resolvedDisplayName(for shortcut: KeyboardShortcut) -> String {
+        guard !shortcut.modifierOnly else { return shortcut.displayName }
+        var resolved = shortcut
+        resolved.modifierFlags |= activeModifierFlags
+        return resolved.displayName
+    }
+
     func press(_ shortcut: KeyboardShortcut, id: String) {
         guard activeShortcuts[id] == nil, isAccessibilityTrusted else { return }
         let targetPID = deliveryTarget(for: shortcut)
@@ -76,11 +83,32 @@ final class KeyboardOutputService: ObservableObject {
         if shortcut.modifierOnly {
             event.type = .flagsChanged
         }
-        event.flags = keyDown ? CGEventFlags(rawValue: UInt64(shortcut.modifierFlags)) : []
+        let flags: UInt
+        if shortcut.modifierOnly {
+            // A modifier press is added before it enters activeShortcuts, while a
+            // release is removed first. This makes flagsChanged describe the
+            // modifier state that should exist after the event.
+            flags = keyDown
+                ? activeModifierFlags | shortcut.modifierFlags
+                : activeModifierFlags
+        } else {
+            // Events posted directly to a target PID do not automatically inherit
+            // modifiers posted through the HID tap. Carry all controller-held
+            // modifiers explicitly so ZR(Command) + A becomes a real Command-A.
+            flags = activeModifierFlags | shortcut.modifierFlags
+        }
+        event.flags = CGEventFlags(rawValue: UInt64(flags))
         if let targetPID {
             event.postToPid(targetPID)
         } else {
             event.post(tap: .cghidEventTap)
+        }
+    }
+
+    private var activeModifierFlags: UInt {
+        activeShortcuts.values.reduce(into: UInt(0)) { flags, output in
+            guard output.shortcut.modifierOnly else { return }
+            flags |= output.shortcut.modifierFlags
         }
     }
 }

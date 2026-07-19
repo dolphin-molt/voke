@@ -76,6 +76,24 @@ struct KeyboardShortcut: Codable, Equatable {
         modifierOnly: true
     )
 
+    static let rightOption = KeyboardShortcut(
+        keyCode: 0x3D,
+        modifierFlags: NSEvent.ModifierFlags.option.rawValue,
+        modifierOnly: true
+    )
+
+    static let rightShift = KeyboardShortcut(
+        keyCode: 0x3C,
+        modifierFlags: NSEvent.ModifierFlags.shift.rawValue,
+        modifierOnly: true
+    )
+
+    static let rightControl = KeyboardShortcut(
+        keyCode: 0x3E,
+        modifierFlags: NSEvent.ModifierFlags.control.rawValue,
+        modifierOnly: true
+    )
+
     var displayName: String {
         if modifierOnly {
             return Self.modifierKeyName(keyCode) ?? Self.keyName(keyCode)
@@ -98,14 +116,14 @@ struct KeyboardShortcut: Codable, Equatable {
 
     static func modifierKeyName(_ keyCode: UInt16) -> String? {
         switch keyCode {
-        case 54: "右⌘"
-        case 55: "左⌘"
-        case 56: "左⇧"
-        case 60: "右⇧"
-        case 58: "左⌥"
-        case 61: "右⌥"
-        case 59: "左⌃"
-        case 62: "右⌃"
+        case 54: "右 Command ⌘"
+        case 55: "左 Command ⌘"
+        case 56: "左 Shift ⇧"
+        case 60: "右 Shift ⇧"
+        case 58: "左 Option ⌥"
+        case 61: "右 Option ⌥"
+        case 59: "左 Control ⌃"
+        case 62: "右 Control ⌃"
         case 57: "⇪"
         case 63: "fn"
         default: nil
@@ -156,4 +174,3 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
         )
     }
 }
-

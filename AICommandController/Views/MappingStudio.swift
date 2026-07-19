@@ -69,6 +69,12 @@ struct MappingStudio: View {
     private let border = Color.white.opacity(0.085)
     private let accent = Color(red: 0.58, green: 0.94, blue: 0.56)
     private let warning = Color(red: 1.0, green: 0.70, blue: 0.28)
+    private let modifierPresets = [
+        ModifierPreset(id: "command", label: "⌘ Command", shortcut: .rightCommand),
+        ModifierPreset(id: "option", label: "⌥ Option", shortcut: .rightOption),
+        ModifierPreset(id: "shift", label: "⇧ Shift", shortcut: .rightShift),
+        ModifierPreset(id: "control", label: "⌃ Control", shortcut: .rightControl)
+    ]
 
     private var mapping: ButtonMapping { store.mapping(for: selectedControl) }
 
@@ -204,6 +210,29 @@ struct MappingStudio: View {
                     .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(recorder.isRecording ? warning : border))
                 }
                 .buttonStyle(.plain)
+
+                label("常用修饰键")
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 7) {
+                    ForEach(modifierPresets) { preset in
+                        Button {
+                            store.update(selectedControl) { mapping in
+                                mapping.shortcut = preset.shortcut
+                                mapping.triggerBehavior = .hold
+                            }
+                        } label: {
+                            Text(preset.label)
+                                .font(.system(size: 10, weight: .semibold))
+                                .frame(maxWidth: .infinity, minHeight: 30)
+                                .background(mapping.shortcut == preset.shortcut ? accent.opacity(0.18) : field)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(mapping.shortcut == preset.shortcut ? accent.opacity(0.65) : border)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
 
             VStack(alignment: .leading, spacing: 8) {
@@ -290,4 +319,10 @@ struct MappingStudio: View {
             .font(.system(size: 10, weight: .semibold))
             .foregroundStyle(.secondary)
     }
+}
+
+private struct ModifierPreset: Identifiable {
+    let id: String
+    let label: String
+    let shortcut: KeyboardShortcut
 }
