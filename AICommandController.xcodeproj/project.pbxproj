@@ -7,11 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02A8208C77B4B590082A3ACE /* KeyboardEventPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E22B439B81A722CA038C49 /* KeyboardEventPlannerTests.swift */; };
+		085BB4DB85923600A6800884 /* KeyboardEventPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D57AD0532A74A5682097448 /* KeyboardEventPlanner.swift */; };
 		08BC144D67147A79497C7482 /* MappingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62F982326928BF713C42EEB5 /* MappingModels.swift */; };
 		1E4157063B6F82862A54E7DD /* Controller3DView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E18EEC42187FBB574C2CB1 /* Controller3DView.swift */; };
 		33FAF94E5631A8F41CC4344A /* AICommandControllerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16528D18375F18C173FD4B /* AICommandControllerApp.swift */; };
 		4428AEDC5B7C62DB94BB808F /* ShellCommandService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3C46AF7677E8448281991C /* ShellCommandService.swift */; };
+		94F395731ACE7346BFD5ED74 /* MappingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C00B94480AA6D1B75EF9324 /* MappingStoreTests.swift */; };
 		A6C917C797CED987C70D9481 /* MappingStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3072764B2F41919AEB1DFE80 /* MappingStudio.swift */; };
+		B3F6A0D756CEAE5D87B83540 /* ScrollOutputService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1156E8EDBD16B054145147 /* ScrollOutputService.swift */; };
 		BC2A37CCE787557565E7D695 /* MappingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D8F2723729E858ED900D5D /* MappingStore.swift */; };
 		BCCDBDB5C1A26DE59C082C0B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C5535719CAC979F9CD1DD9F /* DashboardView.swift */; };
 		C18876594AB7B29949A10569 /* KeyboardOutputService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5203875A84226CFDFDC029 /* KeyboardOutputService.swift */; };
@@ -20,11 +24,24 @@
 		FD0E79CE019EB3400A59E7B1 /* AudioDeviceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1313AB99A4F65E39FFDAE9EB /* AudioDeviceService.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A3C6CF86295118437A9D974A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10DBAF8F3C88DE17A3EE63E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7C0327D612658A78A6BB36E1;
+			remoteInfo = AICommandController;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		0D4C758812A834AF662ECBA1 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		1313AB99A4F65E39FFDAE9EB /* AudioDeviceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDeviceService.swift; sourceTree = "<group>"; };
+		28E22B439B81A722CA038C49 /* KeyboardEventPlannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardEventPlannerTests.swift; sourceTree = "<group>"; };
 		3072764B2F41919AEB1DFE80 /* MappingStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingStudio.swift; sourceTree = "<group>"; };
+		4C00B94480AA6D1B75EF9324 /* MappingStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingStoreTests.swift; sourceTree = "<group>"; };
 		4C3C46AF7677E8448281991C /* ShellCommandService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellCommandService.swift; sourceTree = "<group>"; };
+		4D57AD0532A74A5682097448 /* KeyboardEventPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardEventPlanner.swift; sourceTree = "<group>"; };
 		51E18EEC42187FBB574C2CB1 /* Controller3DView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controller3DView.swift; sourceTree = "<group>"; };
 		62F982326928BF713C42EEB5 /* MappingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingModels.swift; sourceTree = "<group>"; };
 		74F6EF3CC22ADAAB57C22758 /* ControllerVisual.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllerVisual.swift; sourceTree = "<group>"; };
@@ -32,10 +49,21 @@
 		8E5203875A84226CFDFDC029 /* KeyboardOutputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardOutputService.swift; sourceTree = "<group>"; };
 		9C5535719CAC979F9CD1DD9F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		A60E2A33CEEE499A5E74292E /* AICommandController.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AICommandController.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D5A85583F4BF906DFB3BAF25 /* AICommandControllerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AICommandControllerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DC1156E8EDBD16B054145147 /* ScrollOutputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollOutputService.swift; sourceTree = "<group>"; };
 		FC16528D18375F18C173FD4B /* AICommandControllerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICommandControllerApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		05C8C5B212B2151195D69171 /* AICommandControllerTests */ = {
+			isa = PBXGroup;
+			children = (
+				28E22B439B81A722CA038C49 /* KeyboardEventPlannerTests.swift */,
+				4C00B94480AA6D1B75EF9324 /* MappingStoreTests.swift */,
+			);
+			path = AICommandControllerTests;
+			sourceTree = "<group>";
+		};
 		1320F014508E01F1C4A3299F /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -48,8 +76,10 @@
 			isa = PBXGroup;
 			children = (
 				1313AB99A4F65E39FFDAE9EB /* AudioDeviceService.swift */,
+				4D57AD0532A74A5682097448 /* KeyboardEventPlanner.swift */,
 				8E5203875A84226CFDFDC029 /* KeyboardOutputService.swift */,
 				86D8F2723729E858ED900D5D /* MappingStore.swift */,
+				DC1156E8EDBD16B054145147 /* ScrollOutputService.swift */,
 				4C3C46AF7677E8448281991C /* ShellCommandService.swift */,
 			);
 			path = Services;
@@ -59,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				A60E2A33CEEE499A5E74292E /* AICommandController.app */,
+				D5A85583F4BF906DFB3BAF25 /* AICommandControllerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -78,6 +109,7 @@
 			isa = PBXGroup;
 			children = (
 				C4E72E2A4B5CA16332634514 /* AICommandController */,
+				05C8C5B212B2151195D69171 /* AICommandControllerTests */,
 				9D83DBA919BC61DDBF8FF330 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -114,6 +146,24 @@
 			productReference = A60E2A33CEEE499A5E74292E /* AICommandController.app */;
 			productType = "com.apple.product-type.application";
 		};
+		F9E7FB8D1A5A6C1D9213A2BE /* AICommandControllerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B7C346B1220D05D6442DFF06 /* Build configuration list for PBXNativeTarget "AICommandControllerTests" */;
+			buildPhases = (
+				0EF6D252CF6888ECED4D3EFE /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B5D38FFE46AE233167191538 /* PBXTargetDependency */,
+			);
+			name = AICommandControllerTests;
+			packageProductDependencies = (
+			);
+			productName = AICommandControllerTests;
+			productReference = D5A85583F4BF906DFB3BAF25 /* AICommandControllerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -143,11 +193,21 @@
 			projectRoot = "";
 			targets = (
 				7C0327D612658A78A6BB36E1 /* AICommandController */,
+				F9E7FB8D1A5A6C1D9213A2BE /* AICommandControllerTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0EF6D252CF6888ECED4D3EFE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				02A8208C77B4B590082A3ACE /* KeyboardEventPlannerTests.swift in Sources */,
+				94F395731ACE7346BFD5ED74 /* MappingStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3EC486FA198357E29115BCA8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -158,15 +218,25 @@
 				1E4157063B6F82862A54E7DD /* Controller3DView.swift in Sources */,
 				CC115AFCAAB471D2C25B8226 /* ControllerVisual.swift in Sources */,
 				BCCDBDB5C1A26DE59C082C0B /* DashboardView.swift in Sources */,
+				085BB4DB85923600A6800884 /* KeyboardEventPlanner.swift in Sources */,
 				C18876594AB7B29949A10569 /* KeyboardOutputService.swift in Sources */,
 				08BC144D67147A79497C7482 /* MappingModels.swift in Sources */,
 				BC2A37CCE787557565E7D695 /* MappingStore.swift in Sources */,
 				A6C917C797CED987C70D9481 /* MappingStudio.swift in Sources */,
+				B3F6A0D756CEAE5D87B83540 /* ScrollOutputService.swift in Sources */,
 				4428AEDC5B7C62DB94BB808F /* ShellCommandService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B5D38FFE46AE233167191538 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7C0327D612658A78A6BB36E1 /* AICommandController */;
+			targetProxy = A3C6CF86295118437A9D974A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		065F839185C111ADF05D611C /* Release */ = {
@@ -232,7 +302,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "AI Command Controller";
@@ -242,12 +312,47 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dolphin.ai-command-controller";
+				PRODUCT_MODULE_NAME = AICommandController;
 				PRODUCT_NAME = "AI Command Controller";
 				SDKROOT = macosx;
 			};
 			name = Debug;
+		};
+		2AE98E5BC66069714F39D327 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.dolphin.ai-command-controller.tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AI Command Controller.app/Contents/MacOS/AI Command Controller";
+			};
+			name = Debug;
+		};
+		39A7A89197486E9B6AD7A463 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.dolphin.ai-command-controller.tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AI Command Controller.app/Contents/MacOS/AI Command Controller";
+			};
+			name = Release;
 		};
 		5049F4695695EDAA11F1B893 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -255,7 +360,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "AI Command Controller";
@@ -265,8 +370,9 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dolphin.ai-command-controller";
+				PRODUCT_MODULE_NAME = AICommandController;
 				PRODUCT_NAME = "AI Command Controller";
 				SDKROOT = macosx;
 			};
@@ -353,6 +459,15 @@
 			buildConfigurations = (
 				7659B517C3D61DDFF61EB54B /* Debug */,
 				065F839185C111ADF05D611C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B7C346B1220D05D6442DFF06 /* Build configuration list for PBXNativeTarget "AICommandControllerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2AE98E5BC66069714F39D327 /* Debug */,
+				39A7A89197486E9B6AD7A463 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

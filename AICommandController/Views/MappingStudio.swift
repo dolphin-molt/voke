@@ -84,7 +84,7 @@ struct MappingStudio: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("按键映射")
                         .font(.system(size: 17, weight: .bold, design: .rounded))
-                    Text("选择一个手柄按键，然后设置它的动作")
+                    Text("按钮和左右摇杆方向都可以独立设置")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
@@ -107,8 +107,8 @@ struct MappingStudio: View {
                         Text(kind.title).tag(kind)
                     }
                 }
-                .labelsHidden()
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Group {
@@ -117,6 +117,10 @@ struct MappingStudio: View {
                     emptyState
                 case .shortcut:
                     shortcutEditor
+                case .scroll:
+                    scrollEditor
+                case .appSwitch:
+                    appSwitchEditor
                 case .shell:
                     shellEditor
                 }
@@ -272,6 +276,38 @@ struct MappingStudio: View {
         }
     }
 
+    private var scrollEditor: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            label("滚动方向")
+            Picker("滚动方向", selection: scrollDirectionBinding) {
+                ForEach(ScrollDirection.allCases) { direction in
+                    Text(direction.title).tag(direction)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            Label("按住摇杆方向会连续滚动，松手立即停止。", systemImage: "scroll")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var appSwitchEditor: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            label("切换方向")
+            Picker("切换方向", selection: appSwitchDirectionBinding) {
+                ForEach(AppSwitchDirection.allCases) { direction in
+                    Text(direction.title).tag(direction)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            Label("使用 macOS 最近使用顺序，并把切换后的 App 窗口带到前台。", systemImage: "macwindow.on.rectangle")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private var currentResult: some View {
         HStack(spacing: 10) {
             Image(systemName: mapping.actionKind == .none ? "minus" : "arrow.right")
@@ -295,7 +331,15 @@ struct MappingStudio: View {
             get: { mapping.actionKind },
             set: { value in
                 recorder.stop()
-                store.update(selectedControl) { $0.actionKind = value }
+                store.update(selectedControl) { mapping in
+                    mapping.actionKind = value
+                    if value == .scroll, mapping.scrollDirection == nil {
+                        mapping.scrollDirection = selectedControl.defaultScrollDirection ?? .down
+                    }
+                    if value == .appSwitch, mapping.appSwitchDirection == nil {
+                        mapping.appSwitchDirection = .next
+                    }
+                }
             }
         )
     }
@@ -311,6 +355,20 @@ struct MappingStudio: View {
         Binding(
             get: { mapping.shellCommand },
             set: { value in store.update(selectedControl) { $0.shellCommand = value } }
+        )
+    }
+
+    private var scrollDirectionBinding: Binding<ScrollDirection> {
+        Binding(
+            get: { mapping.scrollDirection ?? selectedControl.defaultScrollDirection ?? .down },
+            set: { value in store.update(selectedControl) { $0.scrollDirection = value } }
+        )
+    }
+
+    private var appSwitchDirectionBinding: Binding<AppSwitchDirection> {
+        Binding(
+            get: { mapping.appSwitchDirection ?? .next },
+            set: { value in store.update(selectedControl) { $0.appSwitchDirection = value } }
         )
     }
 

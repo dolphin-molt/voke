@@ -213,6 +213,16 @@ struct DashboardView: View {
             .tint(.secondary)
             .padding(.horizontal, 20)
             .padding(.vertical, 13)
+
+            Divider().overlay(border)
+
+            HStack(spacing: 8) {
+                toolButton("导出配置", icon: "square.and.arrow.up", action: model.exportMappings)
+                toolButton("导入配置", icon: "square.and.arrow.down", action: model.importMappings)
+                toolButton("复制诊断", icon: "stethoscope", action: model.copyDiagnostics)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
         .background(surface)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -257,5 +267,15 @@ struct DashboardView: View {
         .frame(maxWidth: 160, minHeight: 30)
         .background(elevated)
         .clipShape(Capsule())
+    }
+
+    private func toolButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.system(size: 9, weight: .semibold))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(.secondary)
     }
 }

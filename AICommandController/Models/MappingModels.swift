@@ -12,6 +12,14 @@ enum ControllerControl: String, Codable, CaseIterable, Identifiable {
     case rightTrigger = "ZR"
     case leftStick = "L3"
     case rightStick = "R3"
+    case leftStickUp = "LS ↑"
+    case leftStickDown = "LS ↓"
+    case leftStickLeft = "LS ←"
+    case leftStickRight = "LS →"
+    case rightStickUp = "RS ↑"
+    case rightStickDown = "RS ↓"
+    case rightStickLeft = "RS ←"
+    case rightStickRight = "RS →"
     case up = "↑"
     case down = "↓"
     case left = "←"
@@ -28,7 +36,9 @@ enum ControllerControl: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .a, .b, .x, .y: "FACE"
         case .leftShoulder, .rightShoulder, .leftTrigger, .rightTrigger: "SHOULDER"
-        case .leftStick, .rightStick: "STICK"
+        case .leftStick, .rightStick,
+             .leftStickUp, .leftStickDown, .leftStickLeft, .leftStickRight,
+             .rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight: "STICK"
         case .up, .down, .left, .right: "DPAD"
         case .menu, .options, .home: "SYSTEM"
         }
@@ -38,6 +48,8 @@ enum ControllerControl: String, Codable, CaseIterable, Identifiable {
 enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
     case none
     case shortcut
+    case scroll
+    case appSwitch
     case shell
 
     var id: String { rawValue }
@@ -46,9 +58,32 @@ enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .none: "无动作"
         case .shortcut: "快捷键"
+        case .scroll: "页面滚动"
+        case .appSwitch: "切换 App"
         case .shell: "终端命令"
         }
     }
+}
+
+enum ScrollDirection: String, Codable, CaseIterable, Identifiable {
+    case up, down, left, right
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .up: "向上"
+        case .down: "向下"
+        case .left: "向左"
+        case .right: "向右"
+        }
+    }
+}
+
+enum AppSwitchDirection: String, Codable, CaseIterable, Identifiable {
+    case previous, next
+
+    var id: String { rawValue }
+    var title: String { self == .previous ? "上一个 App" : "下一个 App" }
 }
 
 enum TriggerBehavior: String, Codable, CaseIterable, Identifiable {
@@ -153,6 +188,26 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
     var shortcut: KeyboardShortcut?
     var triggerBehavior: TriggerBehavior
     var shellCommand: String
+    var scrollDirection: ScrollDirection?
+    var appSwitchDirection: AppSwitchDirection?
+
+    init(
+        control: ControllerControl,
+        actionKind: MappingActionKind,
+        shortcut: KeyboardShortcut?,
+        triggerBehavior: TriggerBehavior,
+        shellCommand: String,
+        scrollDirection: ScrollDirection? = nil,
+        appSwitchDirection: AppSwitchDirection? = nil
+    ) {
+        self.control = control
+        self.actionKind = actionKind
+        self.shortcut = shortcut
+        self.triggerBehavior = triggerBehavior
+        self.shellCommand = shellCommand
+        self.scrollDirection = scrollDirection
+        self.appSwitchDirection = appSwitchDirection
+    }
 
     var id: ControllerControl { control }
 
@@ -160,6 +215,8 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
         switch actionKind {
         case .none: "未配置"
         case .shortcut: shortcut?.displayName ?? "等待录制"
+        case .scroll: "滚动\((scrollDirection ?? control.defaultScrollDirection ?? .down).title)"
+        case .appSwitch: (appSwitchDirection ?? .next).title
         case .shell: shellCommand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "等待命令" : "$ \(shellCommand)"
         }
     }
@@ -172,5 +229,17 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
             triggerBehavior: .tap,
             shellCommand: ""
         )
+    }
+}
+
+extension ControllerControl {
+    var defaultScrollDirection: ScrollDirection? {
+        switch self {
+        case .leftStickUp, .rightStickUp: .up
+        case .leftStickDown, .rightStickDown: .down
+        case .leftStickLeft, .rightStickLeft: .left
+        case .leftStickRight, .rightStickRight: .right
+        default: nil
+        }
     }
 }
