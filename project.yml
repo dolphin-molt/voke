@@ -1,0 +1,29 @@
+name: AICommandController
+options:
+  bundleIdPrefix: com.dolphin
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+targets:
+  AICommandController:
+    type: application
+    platform: macOS
+    sources:
+      - AICommandController
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dolphin.ai-command-controller
+        PRODUCT_NAME: AI Command Controller
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_APP_SANDBOX: NO
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: AI Command Controller
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: AI Command Controller 需要识别和使用你选择的语音输入设备。
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+
