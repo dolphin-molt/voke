@@ -15,6 +15,11 @@ final class KeyboardOutputService: ObservableObject {
         AXIsProcessTrustedWithOptions(options)
     }
 
+    func openAccessibilitySettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     func pressCommand() {
         guard !commandIsPressed, isAccessibilityTrusted else { return }
         postCommand(keyDown: true)
@@ -35,4 +40,3 @@ final class KeyboardOutputService: ObservableObject {
         event.post(tap: .cghidEventTap)
     }
 }
-

@@ -6,10 +6,12 @@
 
 - 自动发现 macOS GameController 支持的手柄
 - 实时显示 A/B/X/Y、肩键、扳机、十字键和双摇杆
+- 可旋转、缩放的原生 3D Pro Controller 比例模型，按键与摇杆实时联动
 - 枚举当前音频输入/输出设备，并标记系统默认设备
 - 总开关开启后，按住 ZR 发送 Command Key Down，松开时发送 Command Key Up
 - 手柄断连、关闭映射或应用退出时强制释放 Command
 - 在应用中引导开启 macOS 辅助功能权限
+- 首次启动时自动触发 macOS 辅助功能授权提示，并可直达系统设置
 
 ## 开发运行
 
@@ -26,6 +28,9 @@ xcodebuild -project AICommandController.xcodeproj -scheme AICommandController -c
 ```
 
 首次发送快捷键前，需要在“系统设置 → 隐私与安全性 → 辅助功能”中允许 AI Command Controller。
+应用启动时会自动触发系统授权提示，但 macOS 不允许应用代替用户打开权限开关；未授权时可通过应用内按钮直达对应设置页。
+
+当前 3D 手柄是按 Pro Controller 外观比例和真实按键布局制作的交互模型，不是可用于开模制造的工业 CAD。制造级 1:1 需要实物尺寸、六视图照片或扫描数据，再替换为 USDZ/RealityKit 模型；现有输入节点命名可以继续复用。
 
 ## 安全设计
 

@@ -53,6 +53,13 @@ final class AppModel: ObservableObject {
         }
         attachFirstController()
         addEvent("控制台已启动")
+
+        Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(700))
+            guard let self, !self.keyboard.isAccessibilityTrusted else { return }
+            self.keyboard.requestAccessibilityPermission()
+            self.addEvent("已请求辅助功能权限")
+        }
     }
 
     func stop() {
@@ -68,6 +75,10 @@ final class AppModel: ObservableObject {
     func requestAccessibility() {
         keyboard.requestAccessibilityPermission()
         objectWillChange.send()
+    }
+
+    func openAccessibilitySettings() {
+        keyboard.openAccessibilitySettings()
     }
 
     private func observeControllers() {
@@ -203,4 +214,3 @@ struct ControlEvent: Identifiable {
     let message: String
     let date = Date()
 }
-

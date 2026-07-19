@@ -195,22 +195,38 @@ struct DashboardView: View {
             .overlay(RoundedRectangle(cornerRadius: 7).stroke(line))
 
             if !model.keyboard.isAccessibilityTrusted {
-                Button {
-                    model.requestAccessibility()
-                } label: {
-                    HStack {
-                        Image(systemName: "lock.shield")
-                        Text("授权辅助功能")
-                        Spacer()
-                        Image(systemName: "arrow.up.right")
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 9) {
+                        Image(systemName: "lock.shield.fill")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("需要辅助功能权限")
+                                .font(.system(size: 11, weight: .bold))
+                            Text("系统不允许应用自动替你打开授权开关")
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .padding(13)
-                    .background(amber.opacity(0.12))
-                    .foregroundStyle(amber)
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(amber.opacity(0.45)))
+                    Button {
+                        model.openAccessibilitySettings()
+                    } label: {
+                        HStack {
+                            Text("打开系统设置")
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                        }
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .padding(.horizontal, 11)
+                        .frame(height: 32)
+                        .background(amber)
+                        .foregroundStyle(.black)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                .padding(13)
+                .background(amber.opacity(0.10))
+                .foregroundStyle(amber)
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(amber.opacity(0.45)))
             }
 
             sectionLabel("EVENT LOG", index: "D")
@@ -322,4 +338,3 @@ private struct GridTexture: View {
         }
     }
 }
-
