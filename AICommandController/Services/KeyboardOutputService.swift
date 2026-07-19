@@ -4,8 +4,8 @@ import Foundation
 
 @MainActor
 final class KeyboardOutputService: ObservableObject {
-    private let rightCommandKeyCode: CGKeyCode = 0x36
-    @Published private(set) var commandIsPressed = false
+    @Published private(set) var activeOutputCount = 0
+    private var activeShortcuts: [String: KeyboardShortcut] = [:]
 
     var isAccessibilityTrusted: Bool {
         AXIsProcessTrusted()
@@ -21,30 +21,44 @@ final class KeyboardOutputService: ObservableObject {
         NSWorkspace.shared.open(url)
     }
 
-    func pressCommand() {
-        guard !commandIsPressed, isAccessibilityTrusted else { return }
-        postCommand(keyDown: true)
-        commandIsPressed = true
+    func tap(_ shortcut: KeyboardShortcut) {
+        guard isAccessibilityTrusted else { return }
+        post(shortcut, keyDown: true)
+        post(shortcut, keyDown: false)
     }
 
-    func releaseCommand() {
-        guard commandIsPressed else { return }
-        postCommand(keyDown: false)
-        commandIsPressed = false
+    func press(_ shortcut: KeyboardShortcut, id: String) {
+        guard activeShortcuts[id] == nil, isAccessibilityTrusted else { return }
+        post(shortcut, keyDown: true)
+        activeShortcuts[id] = shortcut
+        activeOutputCount = activeShortcuts.count
     }
 
-    private func postCommand(keyDown: Bool) {
+    func release(id: String) {
+        guard let shortcut = activeShortcuts.removeValue(forKey: id) else { return }
+        post(shortcut, keyDown: false)
+        activeOutputCount = activeShortcuts.count
+    }
+
+    func releaseAll() {
+        let active = activeShortcuts
+        activeShortcuts.removeAll()
+        active.forEach { post($0.value, keyDown: false) }
+        activeOutputCount = 0
+    }
+
+    private func post(_ shortcut: KeyboardShortcut, keyDown: Bool) {
         guard let source = CGEventSource(stateID: .combinedSessionState),
               let event = CGEvent(
                 keyboardEventSource: source,
-                virtualKey: rightCommandKeyCode,
+                virtualKey: CGKeyCode(shortcut.keyCode),
                 keyDown: keyDown
               )
         else { return }
-        // A standalone modifier is delivered by macOS as flagsChanged, not a
-        // regular keyDown/keyUp event. Modifier-only global shortcuts rely on it.
-        event.type = .flagsChanged
-        event.flags = keyDown ? .maskCommand : []
+        if shortcut.modifierOnly {
+            event.type = .flagsChanged
+        }
+        event.flags = keyDown ? CGEventFlags(rawValue: UInt64(shortcut.modifierFlags)) : []
         event.post(tap: .cghidEventTap)
     }
 }

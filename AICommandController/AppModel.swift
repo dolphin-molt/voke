@@ -14,23 +14,19 @@ final class AppModel: ObservableObject {
     @Published var rightTrigger: Float = 0
     @Published var mappingEnabled = false {
         didSet {
-            if mappingEnabled && !keyboard.isAccessibilityTrusted {
-                mappingEnabled = false
-                keyboard.releaseCommand()
-                keyboard.requestAccessibilityPermission()
-                addEvent("输出被阻止 · 请先授权辅助功能")
-                return
-            }
-            if !mappingEnabled { keyboard.releaseCommand() }
+            if !mappingEnabled { keyboard.releaseAll() }
             addEvent(mappingEnabled ? "映射已启用" : "映射已安全关闭")
         }
     }
     @Published var events: [ControlEvent] = []
     @Published var audioDevices: [AudioDeviceInfo] = []
     @Published var activeApplication = "AI COMMAND"
+    @Published var selectedControl: ControllerControl = .rightTrigger
 
     let keyboard = KeyboardOutputService()
+    let mappingStore = MappingStore()
     private let audio = AudioDeviceService()
+    private let shell = ShellCommandService()
     private var observers: [NSObjectProtocol] = []
     private var audioTimer: Timer?
     private var appTimer: Timer?
@@ -70,7 +66,7 @@ final class AppModel: ObservableObject {
     }
 
     func stop() {
-        keyboard.releaseCommand()
+        keyboard.releaseAll()
         audioTimer?.invalidate()
         appTimer?.invalidate()
         observers.forEach(NotificationCenter.default.removeObserver)
@@ -137,7 +133,6 @@ final class AppModel: ObservableObject {
                 guard let self else { return }
                 self.rightTrigger = value
                 self.setButton("ZR", pressed: pressed)
-                self.handleVoiceTrigger(pressed: pressed)
             }
         }
         gamepad.leftThumbstick.valueChangedHandler = { [weak self] _, x, y in
@@ -169,30 +164,71 @@ final class AppModel: ObservableObject {
         } else {
             changed = pressedButtons.remove(name) != nil
         }
-        if changed { addEvent("\(name) \(pressed ? "按下" : "松开")") }
+        guard changed else { return }
+        addEvent("\(name) \(pressed ? "按下" : "松开")")
+        guard let control = ControllerControl(rawValue: name) else { return }
+        if pressed { selectedControl = control }
+        dispatchMapping(control, pressed: pressed)
     }
 
-    private func handleVoiceTrigger(pressed: Bool) {
+    private func dispatchMapping(_ control: ControllerControl, pressed: Bool) {
+        let mapping = mappingStore.mapping(for: control)
+        let outputID = "controller.\(control.rawValue)"
+
         guard mappingEnabled else {
-            if !pressed { keyboard.releaseCommand() }
+            if !pressed { keyboard.release(id: outputID) }
             return
         }
-        guard keyboard.isAccessibilityTrusted else {
-            keyboard.releaseCommand()
-            if pressed { addEvent("需要辅助功能权限") }
+
+        switch mapping.actionKind {
+        case .none:
             return
-        }
-        if pressed {
-            keyboard.pressCommand()
-            addEvent("语音输入开始 · RIGHT ⌘ DOWN")
-        } else {
-            keyboard.releaseCommand()
-            addEvent("语音输入结束 · RIGHT ⌘ UP")
+        case .shortcut:
+            guard let shortcut = mapping.shortcut else {
+                if pressed { addEvent("\(control.rawValue) 尚未录制快捷键") }
+                return
+            }
+            guard keyboard.isAccessibilityTrusted else {
+                if pressed {
+                    addEvent("\(control.rawValue) 被阻止 · 需要辅助功能权限")
+                    keyboard.requestAccessibilityPermission()
+                }
+                return
+            }
+            switch mapping.triggerBehavior {
+            case .tap:
+                if pressed {
+                    keyboard.tap(shortcut)
+                    addEvent("\(control.rawValue) → \(shortcut.displayName)")
+                }
+            case .hold:
+                if pressed {
+                    keyboard.press(shortcut, id: outputID)
+                    addEvent("\(control.rawValue) → \(shortcut.displayName) DOWN")
+                } else {
+                    keyboard.release(id: outputID)
+                    addEvent("\(control.rawValue) → \(shortcut.displayName) UP")
+                }
+            }
+        case .shell:
+            guard pressed else { return }
+            let command = mapping.shellCommand.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !command.isEmpty else {
+                addEvent("\(control.rawValue) 尚未填写终端命令")
+                return
+            }
+            addEvent("\(control.rawValue) → $ \(command)")
+            Task { [weak self] in
+                guard let self else { return }
+                let result = await self.shell.run(command)
+                let detail = result.output.isEmpty ? "无输出" : result.output.replacingOccurrences(of: "\n", with: " · ")
+                self.addEvent("命令退出 \(result.exitCode) · \(detail)")
+            }
         }
     }
 
     private func handleDisconnect(_ controller: GCController) {
-        keyboard.releaseCommand()
+        keyboard.releaseAll()
         controllerConnected = false
         controllerName = "等待手柄"
         pressedButtons.removeAll()

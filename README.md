@@ -1,6 +1,6 @@
 # AI Command Controller
 
-把游戏手柄变成面向 AI 工作流的 macOS 输入控制台：嘴负责内容，耳机负责反馈，手柄负责意图。
+把游戏手柄变成通用的 macOS 动作控制台：每个手柄按键都可以映射成键盘操作、组合键或终端命令。
 
 ## 当前 MVP
 
@@ -8,8 +8,11 @@
 - 实时显示 A/B/X/Y、肩键、扳机、十字键和双摇杆
 - 可旋转、缩放的原生 3D Pro Controller 比例模型，按键与摇杆实时联动
 - 枚举当前音频输入/输出设备，并标记系统默认设备
-- 总开关开启后，按住 ZR 发送右 Command Key Down（键码 0x36），松开时发送右 Command Key Up
-- 手柄断连、关闭映射或应用退出时强制释放 Command
+- Mapping Studio 支持为 A/B/X/Y、肩键、扳机、摇杆按下、十字键和系统键独立配置动作
+- 支持录制单键、组合键、左右修饰键，并选择“点按一次”或“按住 / 松开”
+- 支持按键触发自定义 `/bin/zsh -lc` 终端命令，并在事件日志显示退出码和输出
+- 配置自动持久化；默认仅提供一个可编辑的 ZR → 右 Command 示例
+- 手柄断连、关闭映射或应用退出时强制释放所有仍处于按下状态的键
 - 在应用中引导开启 macOS 辅助功能权限
 - 首次启动时自动触发 macOS 辅助功能授权提示，并可直达系统设置
 - 响应式窗口布局：宽屏动态三栏，窄屏自动切换为纵向控制台，3D 手柄随可用空间缩放
@@ -35,5 +38,6 @@ xcodebuild -project AICommandController.xcodeproj -scheme AICommandController -c
 
 ## 安全设计
 
-应用默认处于 SAFE 模式，不会向其他应用发送任何键盘事件。只有主动开启 OUTPUT 后，ZR 才会映射为 Command。任何断连或关闭操作都会发送 Command Key Up，避免修饰键卡住。
-未授予辅助功能权限时 OUTPUT 会保持锁定，防止界面显示 ARMED 但事件实际被 macOS 拦截。单独的 Command 使用 macOS `flagsChanged` 修饰键事件发送，以兼容监听“按住 Command”的语音工具。
+应用默认处于 SAFE 模式，只监听手柄，不执行任何映射。主动开启 OUTPUT 后才允许执行快捷键和终端命令。任何断连、关闭或退出都会释放仍处于按下状态的键，避免修饰键卡住。
+
+键盘快捷键需要 macOS 辅助功能权限；终端命令不依赖该权限。终端动作拥有当前用户权限，请只配置你理解并信任的命令。单独的 Command、Shift、Option、Control 使用 macOS `flagsChanged` 事件，左右修饰键可以分别录制。

@@ -7,8 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		08BC144D67147A79497C7482 /* MappingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62F982326928BF713C42EEB5 /* MappingModels.swift */; };
 		1E4157063B6F82862A54E7DD /* Controller3DView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E18EEC42187FBB574C2CB1 /* Controller3DView.swift */; };
 		33FAF94E5631A8F41CC4344A /* AICommandControllerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16528D18375F18C173FD4B /* AICommandControllerApp.swift */; };
+		4428AEDC5B7C62DB94BB808F /* ShellCommandService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3C46AF7677E8448281991C /* ShellCommandService.swift */; };
+		A6C917C797CED987C70D9481 /* MappingStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3072764B2F41919AEB1DFE80 /* MappingStudio.swift */; };
+		BC2A37CCE787557565E7D695 /* MappingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D8F2723729E858ED900D5D /* MappingStore.swift */; };
 		BCCDBDB5C1A26DE59C082C0B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C5535719CAC979F9CD1DD9F /* DashboardView.swift */; };
 		C18876594AB7B29949A10569 /* KeyboardOutputService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5203875A84226CFDFDC029 /* KeyboardOutputService.swift */; };
 		CC115AFCAAB471D2C25B8226 /* ControllerVisual.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F6EF3CC22ADAAB57C22758 /* ControllerVisual.swift */; };
@@ -19,8 +23,12 @@
 /* Begin PBXFileReference section */
 		0D4C758812A834AF662ECBA1 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		1313AB99A4F65E39FFDAE9EB /* AudioDeviceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDeviceService.swift; sourceTree = "<group>"; };
+		3072764B2F41919AEB1DFE80 /* MappingStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingStudio.swift; sourceTree = "<group>"; };
+		4C3C46AF7677E8448281991C /* ShellCommandService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellCommandService.swift; sourceTree = "<group>"; };
 		51E18EEC42187FBB574C2CB1 /* Controller3DView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controller3DView.swift; sourceTree = "<group>"; };
+		62F982326928BF713C42EEB5 /* MappingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingModels.swift; sourceTree = "<group>"; };
 		74F6EF3CC22ADAAB57C22758 /* ControllerVisual.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllerVisual.swift; sourceTree = "<group>"; };
+		86D8F2723729E858ED900D5D /* MappingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingStore.swift; sourceTree = "<group>"; };
 		8E5203875A84226CFDFDC029 /* KeyboardOutputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardOutputService.swift; sourceTree = "<group>"; };
 		9C5535719CAC979F9CD1DD9F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		A60E2A33CEEE499A5E74292E /* AICommandController.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AICommandController.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -28,11 +36,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		1320F014508E01F1C4A3299F /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				62F982326928BF713C42EEB5 /* MappingModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		6C3BF5E37AFB249EDFFA4D2F /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				1313AB99A4F65E39FFDAE9EB /* AudioDeviceService.swift */,
 				8E5203875A84226CFDFDC029 /* KeyboardOutputService.swift */,
+				86D8F2723729E858ED900D5D /* MappingStore.swift */,
+				4C3C46AF7677E8448281991C /* ShellCommandService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -51,6 +69,7 @@
 				51E18EEC42187FBB574C2CB1 /* Controller3DView.swift */,
 				74F6EF3CC22ADAAB57C22758 /* ControllerVisual.swift */,
 				9C5535719CAC979F9CD1DD9F /* DashboardView.swift */,
+				3072764B2F41919AEB1DFE80 /* MappingStudio.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -68,6 +87,7 @@
 			children = (
 				FC16528D18375F18C173FD4B /* AICommandControllerApp.swift */,
 				0D4C758812A834AF662ECBA1 /* AppModel.swift */,
+				1320F014508E01F1C4A3299F /* Models */,
 				6C3BF5E37AFB249EDFFA4D2F /* Services */,
 				9F0FB8A2168C93FF8DBFEA34 /* Views */,
 			);
@@ -139,6 +159,10 @@
 				CC115AFCAAB471D2C25B8226 /* ControllerVisual.swift in Sources */,
 				BCCDBDB5C1A26DE59C082C0B /* DashboardView.swift in Sources */,
 				C18876594AB7B29949A10569 /* KeyboardOutputService.swift in Sources */,
+				08BC144D67147A79497C7482 /* MappingModels.swift in Sources */,
+				BC2A37CCE787557565E7D695 /* MappingStore.swift in Sources */,
+				A6C917C797CED987C70D9481 /* MappingStudio.swift in Sources */,
+				4428AEDC5B7C62DB94BB808F /* ShellCommandService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

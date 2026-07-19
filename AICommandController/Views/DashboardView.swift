@@ -62,13 +62,12 @@ struct DashboardView: View {
                     }
                     Text(model.mappingEnabled ? "ARMED" : "SAFE")
                         .font(.system(size: availableWidth < 820 ? 10 : 13, weight: .black, design: .monospaced))
-                        .foregroundStyle(model.mappingEnabled ? amber : (model.keyboard.isAccessibilityTrusted ? .white : amber))
+                        .foregroundStyle(model.mappingEnabled ? amber : .white)
                 }
             }
             .toggleStyle(.switch)
             .tint(amber)
-            .disabled(!model.keyboard.isAccessibilityTrusted)
-            .help(model.keyboard.isAccessibilityTrusted ? "开启或关闭手柄按键输出" : "请先授权辅助功能")
+            .help("开启或关闭全部手柄动作输出")
         }
         .padding(.horizontal, availableWidth < 900 ? 16 : 26)
         .frame(height: availableWidth < 900 ? 68 : 82)
@@ -77,7 +76,7 @@ struct DashboardView: View {
 
     private func wideLayout(size: CGSize) -> some View {
         let deviceWidth = min(292, max(230, size.width * 0.215))
-        let actionWidth = min(320, max(278, size.width * 0.235))
+        let actionWidth = min(360, max(320, size.width * 0.25))
 
         return HStack(spacing: 0) {
             Group {
@@ -213,56 +212,21 @@ struct DashboardView: View {
 
     private func actionRail(fillHeight: Bool) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionLabel("ACTIVE ROUTE", index: "C")
+            sectionLabel("MAPPING STUDIO", index: "C")
 
-            VStack(alignment: .leading, spacing: 15) {
-                HStack {
-                    Text("01")
-                        .font(.system(size: 10, weight: .black, design: .monospaced))
-                        .foregroundStyle(amber)
-                    Spacer()
-                    Text("GLOBAL")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                }
-                Text("HOLD TO TALK")
-                    .font(.system(size: 19, weight: .black, design: .rounded))
-                    .tracking(0.7)
-                HStack(alignment: .center, spacing: 12) {
-                    Text("ZR")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
-                        .foregroundStyle(model.pressedButtons.contains("ZR") ? .black : amber)
-                        .frame(width: 54, height: 42)
-                        .background(model.pressedButtons.contains("ZR") ? amber : amber.opacity(0.10))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(amber.opacity(0.7)))
-                    Image(systemName: "arrow.right")
-                        .foregroundStyle(.secondary)
-                    VStack(spacing: 0) {
-                        Text("⌘")
-                            .font(.system(size: 25, weight: .bold, design: .rounded))
-                        Text("RIGHT")
-                            .font(.system(size: 7, weight: .black, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                }
-                Text("按住右侧后扳机 ZR 触发右 Command，松开释放。L、R、ZL 不会触发。")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(3)
-            }
-            .padding(16)
-            .background(panel)
-            .overlay(alignment: .leading) { Rectangle().fill(amber).frame(width: 2) }
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(line))
+            MappingStudio(
+                store: model.mappingStore,
+                selectedControl: $model.selectedControl,
+                accessibilityTrusted: model.keyboard.isAccessibilityTrusted,
+                openAccessibilitySettings: model.openAccessibilitySettings
+            )
 
             if !model.keyboard.isAccessibilityTrusted {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 9) {
                         Image(systemName: "lock.shield.fill")
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("需要辅助功能权限")
+                            Text("快捷键需要辅助功能权限")
                                 .font(.system(size: 11, weight: .bold))
                             Text("系统不允许应用自动替你打开授权开关")
                                 .font(.system(size: 9, weight: .medium))
