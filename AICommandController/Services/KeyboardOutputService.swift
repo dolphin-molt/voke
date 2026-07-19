@@ -36,6 +36,9 @@ final class KeyboardOutputService: ObservableObject {
         guard let source = CGEventSource(stateID: .combinedSessionState),
               let event = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: keyDown)
         else { return }
+        // A standalone modifier is delivered by macOS as flagsChanged, not a
+        // regular keyDown/keyUp event. Modifier-only global shortcuts rely on it.
+        event.type = .flagsChanged
         event.flags = keyDown ? .maskCommand : []
         event.post(tap: .cghidEventTap)
     }

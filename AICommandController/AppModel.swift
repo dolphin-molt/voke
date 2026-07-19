@@ -14,6 +14,13 @@ final class AppModel: ObservableObject {
     @Published var rightTrigger: Float = 0
     @Published var mappingEnabled = false {
         didSet {
+            if mappingEnabled && !keyboard.isAccessibilityTrusted {
+                mappingEnabled = false
+                keyboard.releaseCommand()
+                keyboard.requestAccessibilityPermission()
+                addEvent("输出被阻止 · 请先授权辅助功能")
+                return
+            }
             if !mappingEnabled { keyboard.releaseCommand() }
             addEvent(mappingEnabled ? "映射已启用" : "映射已安全关闭")
         }

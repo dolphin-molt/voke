@@ -62,11 +62,13 @@ struct DashboardView: View {
                     }
                     Text(model.mappingEnabled ? "ARMED" : "SAFE")
                         .font(.system(size: availableWidth < 820 ? 10 : 13, weight: .black, design: .monospaced))
-                        .foregroundStyle(model.mappingEnabled ? amber : .white)
+                        .foregroundStyle(model.mappingEnabled ? amber : (model.keyboard.isAccessibilityTrusted ? .white : amber))
                 }
             }
             .toggleStyle(.switch)
             .tint(amber)
+            .disabled(!model.keyboard.isAccessibilityTrusted)
+            .help(model.keyboard.isAccessibilityTrusted ? "开启或关闭手柄按键输出" : "请先授权辅助功能")
         }
         .padding(.horizontal, availableWidth < 900 ? 16 : 26)
         .frame(height: availableWidth < 900 ? 68 : 82)
@@ -240,7 +242,7 @@ struct DashboardView: View {
                         .font(.system(size: 27, weight: .bold, design: .rounded))
                     Spacer()
                 }
-                Text("按住右扳机启动闪电说，松开结束语音输入。")
+                Text("按住右侧后扳机 ZR 启动闪电说，松开结束语音输入。L、R、ZL 不会触发。")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
                     .lineSpacing(3)

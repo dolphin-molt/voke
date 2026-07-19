@@ -36,3 +36,4 @@ xcodebuild -project AICommandController.xcodeproj -scheme AICommandController -c
 ## 安全设计
 
 应用默认处于 SAFE 模式，不会向其他应用发送任何键盘事件。只有主动开启 OUTPUT 后，ZR 才会映射为 Command。任何断连或关闭操作都会发送 Command Key Up，避免修饰键卡住。
+未授予辅助功能权限时 OUTPUT 会保持锁定，防止界面显示 ARMED 但事件实际被 macOS 拦截。单独的 Command 使用 macOS `flagsChanged` 修饰键事件发送，以兼容监听“按住 Command”的语音工具。
