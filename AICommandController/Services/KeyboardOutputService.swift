@@ -4,6 +4,7 @@ import Foundation
 
 @MainActor
 final class KeyboardOutputService: ObservableObject {
+    private let rightCommandKeyCode: CGKeyCode = 0x36
     @Published private(set) var commandIsPressed = false
 
     var isAccessibilityTrusted: Bool {
@@ -34,7 +35,11 @@ final class KeyboardOutputService: ObservableObject {
 
     private func postCommand(keyDown: Bool) {
         guard let source = CGEventSource(stateID: .combinedSessionState),
-              let event = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: keyDown)
+              let event = CGEvent(
+                keyboardEventSource: source,
+                virtualKey: rightCommandKeyCode,
+                keyDown: keyDown
+              )
         else { return }
         // A standalone modifier is delivered by macOS as flagsChanged, not a
         // regular keyDown/keyUp event. Modifier-only global shortcuts rely on it.

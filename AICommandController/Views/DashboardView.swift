@@ -238,11 +238,16 @@ struct DashboardView: View {
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(amber.opacity(0.7)))
                     Image(systemName: "arrow.right")
                         .foregroundStyle(.secondary)
-                    Text("⌘")
-                        .font(.system(size: 27, weight: .bold, design: .rounded))
+                    VStack(spacing: 0) {
+                        Text("⌘")
+                            .font(.system(size: 25, weight: .bold, design: .rounded))
+                        Text("RIGHT")
+                            .font(.system(size: 7, weight: .black, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
                     Spacer()
                 }
-                Text("按住右侧后扳机 ZR 启动闪电说，松开结束语音输入。L、R、ZL 不会触发。")
+                Text("按住右侧后扳机 ZR 触发右 Command，松开释放。L、R、ZL 不会触发。")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
                     .lineSpacing(3)

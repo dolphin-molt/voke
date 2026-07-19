@@ -8,7 +8,7 @@
 - 实时显示 A/B/X/Y、肩键、扳机、十字键和双摇杆
 - 可旋转、缩放的原生 3D Pro Controller 比例模型，按键与摇杆实时联动
 - 枚举当前音频输入/输出设备，并标记系统默认设备
-- 总开关开启后，按住 ZR 发送 Command Key Down，松开时发送 Command Key Up
+- 总开关开启后，按住 ZR 发送右 Command Key Down（键码 0x36），松开时发送右 Command Key Up
 - 手柄断连、关闭映射或应用退出时强制释放 Command
 - 在应用中引导开启 macOS 辅助功能权限
 - 首次启动时自动触发 macOS 辅助功能授权提示，并可直达系统设置

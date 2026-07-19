@@ -184,10 +184,10 @@ final class AppModel: ObservableObject {
         }
         if pressed {
             keyboard.pressCommand()
-            addEvent("语音输入开始 · ⌘ DOWN")
+            addEvent("语音输入开始 · RIGHT ⌘ DOWN")
         } else {
             keyboard.releaseCommand()
-            addEvent("语音输入结束 · ⌘ UP")
+            addEvent("语音输入结束 · RIGHT ⌘ UP")
         }
     }
 
