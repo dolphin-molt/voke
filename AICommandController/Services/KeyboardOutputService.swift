@@ -77,6 +77,11 @@ final class KeyboardOutputService: ObservableObject {
             try? await Task.sleep(for: .seconds(NSEvent.keyRepeatDelay))
             while !Task.isCancelled {
                 guard let self, let output = self.activeShortcuts[id] else { return }
+                // Some apps ignore consecutive synthetic keyDown events even when
+                // keyboardEventAutorepeat is set. Close the previous pulse first,
+                // then send a fresh repeat keyDown so text fields and editors see
+                // the same discrete input cadence as a physical keyboard.
+                self.post(output.shortcut, keyDown: false, targetPID: output.targetPID)
                 self.post(output.shortcut, keyDown: true, targetPID: output.targetPID, isRepeat: true)
                 try? await Task.sleep(for: .seconds(NSEvent.keyRepeatInterval))
             }
