@@ -29,6 +29,7 @@ struct ControllerVisual: View {
             .clipShape(Capsule())
             .padding(.bottom, 8)
         }
-        .frame(width: 530, height: 390)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .aspectRatio(1.34, contentMode: .fit)
     }
 }

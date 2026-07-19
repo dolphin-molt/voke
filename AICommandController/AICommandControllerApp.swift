@@ -8,7 +8,7 @@ struct AICommandControllerApp: App {
         WindowGroup {
             DashboardView()
                 .environmentObject(model)
-                .frame(minWidth: 1080, minHeight: 680)
+                .frame(minWidth: 760, minHeight: 560)
                 .onAppear { model.start() }
                 .onDisappear { model.stop() }
         }
@@ -23,4 +23,3 @@ struct AICommandControllerApp: App {
         }
     }
 }
-

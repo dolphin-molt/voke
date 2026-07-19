@@ -9,58 +9,113 @@ struct DashboardView: View {
     private let amber = Color(red: 1.0, green: 0.67, blue: 0.22)
 
     var body: some View {
-        ZStack {
-            Color(red: 0.035, green: 0.039, blue: 0.044).ignoresSafeArea()
-            GridTexture().opacity(0.34).ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack {
+                Color(red: 0.035, green: 0.039, blue: 0.044).ignoresSafeArea()
+                GridTexture().opacity(0.34).ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                header
-                Rectangle().fill(line).frame(height: 1)
-                HStack(spacing: 0) {
-                    deviceRail
-                    Rectangle().fill(line).frame(width: 1)
-                    controllerDeck
-                    Rectangle().fill(line).frame(width: 1)
-                    actionRail
+                VStack(spacing: 0) {
+                    header(availableWidth: geometry.size.width)
+                    Rectangle().fill(line).frame(height: 1)
+                    if geometry.size.width >= 1080 {
+                        wideLayout(size: geometry.size)
+                    } else {
+                        compactLayout(size: geometry.size)
+                    }
                 }
             }
         }
         .preferredColorScheme(.dark)
     }
 
-    private var header: some View {
-        HStack(spacing: 18) {
+    private func header(availableWidth: CGFloat) -> some View {
+        HStack(spacing: availableWidth < 900 ? 10 : 18) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("AI COMMAND")
-                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .font(.system(size: availableWidth < 900 ? 18 : 22, weight: .black, design: .rounded))
                     .tracking(2.4)
-                Text("HANDS-FREE CONTROL DECK / 01")
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .tracking(1.7)
+                if availableWidth >= 850 {
+                    Text("HANDS-FREE CONTROL DECK / 01")
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .tracking(1.7)
+                }
             }
             Spacer()
-            statusPill(label: model.activeApplication.uppercased(), active: true, tint: cyan)
-            statusPill(label: model.controllerConnected ? "CONTROLLER ONLINE" : "NO CONTROLLER", active: model.controllerConnected, tint: cyan)
+            if availableWidth >= 1160 {
+                statusPill(label: model.activeApplication.uppercased(), active: true, tint: cyan)
+            }
+            if availableWidth >= 880 {
+                statusPill(label: model.controllerConnected ? "CONTROLLER ONLINE" : "NO CONTROLLER", active: model.controllerConnected, tint: cyan)
+            } else {
+                Circle()
+                    .fill(model.controllerConnected ? cyan : Color.white.opacity(0.2))
+                    .frame(width: 8, height: 8)
+                    .help(model.controllerConnected ? "手柄已连接" : "未连接手柄")
+            }
             Toggle(isOn: $model.mappingEnabled) {
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("OUTPUT")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                    if availableWidth >= 820 {
+                        Text("OUTPUT")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
                     Text(model.mappingEnabled ? "ARMED" : "SAFE")
-                        .font(.system(size: 13, weight: .black, design: .monospaced))
+                        .font(.system(size: availableWidth < 820 ? 10 : 13, weight: .black, design: .monospaced))
                         .foregroundStyle(model.mappingEnabled ? amber : .white)
                 }
             }
             .toggleStyle(.switch)
             .tint(amber)
         }
-        .padding(.horizontal, 26)
-        .frame(height: 82)
+        .padding(.horizontal, availableWidth < 900 ? 16 : 26)
+        .frame(height: availableWidth < 900 ? 68 : 82)
         .background(.black.opacity(0.18))
     }
 
-    private var deviceRail: some View {
+    private func wideLayout(size: CGSize) -> some View {
+        let deviceWidth = min(292, max(230, size.width * 0.215))
+        let actionWidth = min(320, max(278, size.width * 0.235))
+
+        return HStack(spacing: 0) {
+            Group {
+                if size.height < 720 {
+                    ScrollView(.vertical, showsIndicators: false) { deviceRail(fillHeight: false) }
+                } else {
+                    deviceRail(fillHeight: true)
+                }
+            }
+            .frame(width: deviceWidth)
+            Rectangle().fill(line).frame(width: 1)
+            controllerDeck(compact: false)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Rectangle().fill(line).frame(width: 1)
+            Group {
+                if size.height < 800 {
+                    ScrollView(.vertical, showsIndicators: false) { actionRail(fillHeight: false) }
+                } else {
+                    actionRail(fillHeight: true)
+                }
+            }
+            .frame(width: actionWidth)
+        }
+    }
+
+    private func compactLayout(size: CGSize) -> some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 0) {
+                controllerDeck(compact: true)
+                    .frame(height: min(500, max(360, size.height * 0.60)))
+                Rectangle().fill(line).frame(height: 1)
+                compactDeviceGrid
+                Rectangle().fill(line).frame(height: 1)
+                actionRail(fillHeight: false)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func deviceRail(fillHeight: Bool) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             sectionLabel("SIGNAL CHAIN", index: "A")
             DeviceCard(
@@ -88,7 +143,7 @@ struct DashboardView: View {
                 tint: Color(red: 0.46, green: 0.65, blue: 1)
             )
 
-            Spacer()
+            if fillHeight { Spacer(minLength: 16) }
             VStack(alignment: .leading, spacing: 9) {
                 Text("AUDIO DEVICES")
                     .font(.system(size: 9, weight: .bold, design: .monospaced))
@@ -108,10 +163,10 @@ struct DashboardView: View {
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(line))
         }
         .padding(20)
-        .frame(width: 292)
+        .frame(maxWidth: .infinity, maxHeight: fillHeight ? .infinity : nil, alignment: .topLeading)
     }
 
-    private var controllerDeck: some View {
+    private func controllerDeck(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 sectionLabel("LIVE INPUT", index: "B")
@@ -120,9 +175,9 @@ struct DashboardView: View {
                     .font(.system(size: 10, weight: .bold, design: .monospaced))
                     .foregroundStyle(model.pressedButtons.isEmpty ? .secondary : cyan)
             }
-            .padding(22)
+            .padding(compact ? 16 : 22)
 
-            Spacer(minLength: 8)
+            Spacer(minLength: compact ? 0 : 8)
             ControllerVisual(
                 pressed: model.pressedButtons,
                 leftStick: model.leftStick,
@@ -130,8 +185,9 @@ struct DashboardView: View {
                 leftTrigger: model.leftTrigger,
                 rightTrigger: model.rightTrigger
             )
-            .frame(maxWidth: .infinity)
-            Spacer()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, compact ? 14 : 0)
+            Spacer(minLength: compact ? 0 : 8)
 
             HStack(spacing: 8) {
                 ForEach(["ZL", "ZR", "A", "B", "X", "Y"], id: \.self) { key in
@@ -148,12 +204,12 @@ struct DashboardView: View {
                     .font(.system(size: 9, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
-            .padding(22)
+            .padding(compact ? 16 : 22)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var actionRail: some View {
+    private func actionRail(fillHeight: Bool) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             sectionLabel("ACTIVE ROUTE", index: "C")
 
@@ -245,7 +301,7 @@ struct DashboardView: View {
                     .overlay(alignment: .bottom) { Rectangle().fill(line).frame(height: 1) }
                 }
             }
-            Spacer()
+            if fillHeight { Spacer(minLength: 12) }
             HStack {
                 Circle().fill(model.mappingEnabled ? amber : Color.white.opacity(0.22)).frame(width: 7, height: 7)
                 Text(model.mappingEnabled ? "OUTPUT ARMED" : "SAFE MODE · NO KEYS SENT")
@@ -254,7 +310,61 @@ struct DashboardView: View {
             }
         }
         .padding(20)
-        .frame(width: 320)
+        .frame(maxWidth: .infinity, maxHeight: fillHeight ? .infinity : nil, alignment: .topLeading)
+    }
+
+    private var compactDeviceGrid: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionLabel("SIGNAL CHAIN", index: "A")
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 210), spacing: 12)], spacing: 12) {
+                DeviceCard(
+                    icon: "gamecontroller.fill",
+                    eyebrow: "CONTROL",
+                    title: model.controllerName,
+                    detail: model.controllerConnected ? "Bluetooth · 实时监听" : "按任意手柄键唤醒",
+                    online: model.controllerConnected,
+                    tint: cyan
+                )
+                DeviceCard(
+                    icon: "mic.fill",
+                    eyebrow: "VOICE INPUT",
+                    title: model.defaultInput?.name ?? "未发现默认麦克风",
+                    detail: model.defaultInput == nil ? "检查音频连接" : "系统默认输入",
+                    online: model.defaultInput != nil,
+                    tint: amber
+                )
+                DeviceCard(
+                    icon: "headphones",
+                    eyebrow: "MONITOR",
+                    title: model.defaultOutput?.name ?? "未发现默认输出",
+                    detail: model.defaultOutput == nil ? "检查耳机连接" : "系统默认输出",
+                    online: model.defaultOutput != nil,
+                    tint: Color(red: 0.46, green: 0.65, blue: 1)
+                )
+            }
+            if !model.audioDevices.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(model.audioDevices.prefix(6)) { device in
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill((device.isDefaultInput || device.isDefaultOutput) ? cyan : Color.white.opacity(0.2))
+                                    .frame(width: 5, height: 5)
+                                Text(device.name)
+                                    .lineLimit(1)
+                            }
+                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .padding(.horizontal, 10)
+                            .frame(height: 26)
+                            .background(panel)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(line))
+                        }
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func sectionLabel(_ text: String, index: String) -> some View {
