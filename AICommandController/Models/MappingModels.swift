@@ -38,6 +38,7 @@ enum ControllerControl: String, Codable, CaseIterable, Identifiable {
 enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
     case none
     case shortcut
+    case inputSource
     case shell
 
     var id: String { rawValue }
@@ -46,6 +47,7 @@ enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .none: "无动作"
         case .shortcut: "快捷键"
+        case .inputSource: "切换输入法"
         case .shell: "终端命令"
         }
     }
@@ -92,6 +94,12 @@ struct KeyboardShortcut: Codable, Equatable {
         keyCode: 0x3E,
         modifierFlags: NSEvent.ModifierFlags.control.rawValue,
         modifierOnly: true
+    )
+
+    static let switchInputSource = KeyboardShortcut(
+        keyCode: 0x31,
+        modifierFlags: NSEvent.ModifierFlags.control.rawValue,
+        modifierOnly: false
     )
 
     var displayName: String {
@@ -160,6 +168,7 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
         switch actionKind {
         case .none: "未配置"
         case .shortcut: shortcut?.displayName ?? "等待录制"
+        case .inputSource: "切换输入法"
         case .shell: shellCommand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "等待命令" : "$ \(shellCommand)"
         }
     }
