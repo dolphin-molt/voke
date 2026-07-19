@@ -2,6 +2,12 @@ import AppKit
 import ApplicationServices
 import Foundation
 
+enum AppSwitcherShortcutResult {
+    case none
+    case confirmed
+    case cancelled
+}
+
 @MainActor
 final class KeyboardOutputService: ObservableObject {
     @Published private(set) var activeOutputCount = 0
@@ -60,12 +66,25 @@ final class KeyboardOutputService: ObservableObject {
         }
     }
 
-    func commitApplicationSwitchIfActive(using shortcut: KeyboardShortcut) -> Bool {
+    func handleApplicationSwitcherShortcut(_ shortcut: KeyboardShortcut) -> AppSwitcherShortcutResult {
+        guard planner.contains(appSwitchCommandID) else { return .none }
         let isReturn = shortcut.keyCode == 36 || shortcut.keyCode == 76
-        guard isReturn, planner.contains(appSwitchCommandID) else { return false }
-        release(id: appSwitchShiftID)
-        release(id: appSwitchCommandID)
-        return true
+        if isReturn {
+            release(id: appSwitchShiftID)
+            release(id: appSwitchCommandID)
+            return .confirmed
+        }
+        if shortcut.keyCode == 53 {
+            tapGlobal(KeyboardShortcut(keyCode: 53, modifierFlags: 0, modifierOnly: false))
+            Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(80))
+                guard let self else { return }
+                self.release(id: self.appSwitchShiftID)
+                self.release(id: self.appSwitchCommandID)
+            }
+            return .cancelled
+        }
+        return .none
     }
 
     private func tap(_ shortcut: KeyboardShortcut, targetPID: pid_t?) {

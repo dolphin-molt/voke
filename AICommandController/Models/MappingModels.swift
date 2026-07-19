@@ -27,10 +27,23 @@ enum ControllerControl: String, Codable, CaseIterable, Identifiable {
     case menu = "+"
     case options = "−"
     case home = "HOME"
+    case capture = "CAPTURE"
+    case hid1 = "K1"
+    case hid2 = "K2"
+    case hid3 = "K3"
+    case hid4 = "K4"
+    case hid5 = "K5"
+    case hid6 = "K6"
+    case hid7 = "K7"
+    case hid8 = "K8"
+    case hid9 = "K9"
+    case hid10 = "K10"
+    case hid11 = "K11"
+    case hid12 = "K12"
 
     var id: String { rawValue }
 
-    var compactLabel: String { rawValue }
+    var compactLabel: String { self == .capture ? "截屏" : rawValue }
 
     var group: String {
         switch self {
@@ -40,9 +53,17 @@ enum ControllerControl: String, Codable, CaseIterable, Identifiable {
              .leftStickUp, .leftStickDown, .leftStickLeft, .leftStickRight,
              .rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight: "STICK"
         case .up, .down, .left, .right: "DPAD"
-        case .menu, .options, .home: "SYSTEM"
+        case .menu, .options, .home, .capture: "SYSTEM"
+        case .hid1, .hid2, .hid3, .hid4, .hid5, .hid6,
+             .hid7, .hid8, .hid9, .hid10, .hid11, .hid12: "KEYPAD"
         }
     }
+
+    static let gamepadControls = allCases.filter { $0.group != "KEYPAD" }
+    static let hidControls: [ControllerControl] = [
+        .hid1, .hid2, .hid3, .hid4, .hid5, .hid6,
+        .hid7, .hid8, .hid9, .hid10, .hid11, .hid12
+    ]
 }
 
 enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
@@ -50,6 +71,7 @@ enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
     case shortcut
     case scroll
     case appSwitch
+    case screenshot
     case shell
 
     var id: String { rawValue }
@@ -60,6 +82,7 @@ enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
         case .shortcut: "快捷键"
         case .scroll: "页面滚动"
         case .appSwitch: "切换 App"
+        case .screenshot: "截取屏幕"
         case .shell: "终端命令"
         }
     }
@@ -217,6 +240,7 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
         case .shortcut: shortcut?.displayName ?? "等待录制"
         case .scroll: "滚动\((scrollDirection ?? control.defaultScrollDirection ?? .down).title)"
         case .appSwitch: (appSwitchDirection ?? .next).title
+        case .screenshot: "保存当前屏幕"
         case .shell: shellCommand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "等待命令" : "$ \(shellCommand)"
         }
     }
@@ -230,6 +254,38 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
             shellCommand: ""
         )
     }
+}
+
+enum InputDeviceKind: String, Codable {
+    case gameController
+    case hidKeyboard
+
+    var title: String { self == .gameController ? "手柄" : "小键盘" }
+    var icon: String { self == .gameController ? "gamecontroller.fill" : "keyboard.fill" }
+}
+
+struct InputDeviceDescriptor: Identifiable, Equatable {
+    let id: String
+    var name: String
+    var kind: InputDeviceKind
+    var connected: Bool
+    var controls: [ControllerControl]
+    var controlLabels: [ControllerControl: String] = [:]
+}
+
+struct MappingProfile: Codable, Identifiable, Equatable {
+    var id: UUID
+    var name: String
+    var mappings: [ButtonMapping]
+}
+
+struct DeviceMappingConfiguration: Codable, Identifiable, Equatable {
+    var id: String { deviceID }
+    var deviceID: String
+    var deviceName: String
+    var deviceKind: InputDeviceKind
+    var activeProfileID: UUID
+    var profiles: [MappingProfile]
 }
 
 extension ControllerControl {

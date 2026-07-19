@@ -25,12 +25,17 @@ final class AppModel: ObservableObject {
     @Published var audioDevices: [AudioDeviceInfo] = []
     @Published var activeApplication = "AI COMMAND"
     @Published var selectedControl: ControllerControl = .rightTrigger
+    @Published private(set) var devices: [InputDeviceDescriptor] = []
+    @Published private(set) var selectedDeviceID: String?
 
     let keyboard = KeyboardOutputService()
     let mappingStore = MappingStore()
     private let audio = AudioDeviceService()
     private let shell = ShellCommandService()
     private let scroll = ScrollOutputService()
+    private let hid = HIDKeyboardService()
+    private var controllerDeviceIDs: [ObjectIdentifier: String] = [:]
+    private var pressedByDevice: [String: Set<String>] = [:]
     private var observers: [NSObjectProtocol] = []
     private var audioTimer: Timer?
     private var appTimer: Timer?
@@ -41,11 +46,20 @@ final class AppModel: ObservableObject {
     var outputDevices: [AudioDeviceInfo] { audioDevices.filter(\.hasOutput) }
     var defaultInput: AudioDeviceInfo? { inputDevices.first(where: \.isDefaultInput) }
     var defaultOutput: AudioDeviceInfo? { outputDevices.first(where: \.isDefaultOutput) }
+    var selectedDevice: InputDeviceDescriptor? { devices.first { $0.id == selectedDeviceID } }
+    var selectedDeviceControls: [ControllerControl] { selectedDevice?.controls ?? ControllerControl.gamepadControls }
+    var inputMonitoringGranted: Bool { hid.inputMonitoringGranted }
 
     init() {
         mappingStore.objectWillChange
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
+        hid.onDevicesChanged = { [weak self] devices in
+            self?.updateHIDDevices(devices)
+        }
+        hid.onKeyChanged = { [weak self] deviceID, control, pressed in
+            self?.setButton(control.rawValue, pressed: pressed, deviceID: deviceID)
+        }
     }
 
     func start() {
@@ -58,6 +72,7 @@ final class AppModel: ObservableObject {
         refreshAudio()
         refreshActiveApplication()
         observeControllers()
+        hid.start()
 
         audioTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refreshAudio() }
@@ -87,6 +102,7 @@ final class AppModel: ObservableObject {
         observers.forEach(NotificationCenter.default.removeObserver)
         observers.removeAll()
         GCController.stopWirelessControllerDiscovery()
+        hid.stop()
         started = false
     }
 
@@ -97,6 +113,26 @@ final class AppModel: ObservableObject {
 
     func openAccessibilitySettings() {
         keyboard.openAccessibilitySettings()
+    }
+
+    func requestInputMonitoring() {
+        hid.requestInputMonitoring()
+        objectWillChange.send()
+    }
+
+    func selectDevice(_ deviceID: String) {
+        guard let device = devices.first(where: { $0.id == deviceID }) else { return }
+        selectedDeviceID = deviceID
+        mappingStore.selectDevice(deviceID)
+        pressedButtons = pressedByDevice[deviceID] ?? []
+        if !device.controls.contains(selectedControl) {
+            selectedControl = device.controls.first ?? .rightTrigger
+        }
+        addEvent("正在配置 \(device.name)")
+    }
+
+    func controlLabel(_ control: ControllerControl) -> String {
+        selectedDevice?.controlLabels[control] ?? control.compactLabel
     }
 
     private func observeControllers() {
@@ -115,12 +151,43 @@ final class AppModel: ObservableObject {
     }
 
     private func attachFirstController() {
-        if let controller = GCController.controllers().first { configure(controller) }
+        GCController.controllers().forEach(configure)
     }
 
     private func configure(_ controller: GCController) {
-        controllerName = controller.vendorName ?? "游戏手柄"
+        let objectID = ObjectIdentifier(controller)
+        let deviceID: String
+        if let existing = controllerDeviceIDs[objectID] {
+            deviceID = existing
+        } else {
+            let name = controller.vendorName ?? controller.productCategory
+            let base = "gamepad.\(Self.identifierComponent(name))"
+            let used = Set(controllerDeviceIDs.values)
+            var candidate = base
+            var suffix = 2
+            while used.contains(candidate) {
+                candidate = "\(base).\(suffix)"
+                suffix += 1
+            }
+            deviceID = candidate
+            controllerDeviceIDs[objectID] = deviceID
+        }
+
+        let baseName = controller.vendorName ?? "游戏手柄"
+        let baseID = "gamepad.\(Self.identifierComponent(baseName))"
+        let suffix = deviceID == baseID ? nil : deviceID.split(separator: ".").last.map(String.init)
+        controllerName = suffix.map { "\(baseName) · \($0)" } ?? baseName
         controllerConnected = true
+        let descriptor = InputDeviceDescriptor(
+            id: deviceID,
+            name: controllerName,
+            kind: .gameController,
+            connected: true,
+            controls: ControllerControl.gamepadControls
+        )
+        upsertDevice(descriptor)
+        mappingStore.registerDevice(descriptor)
+        synchronizeSelectedDevice(preferredConnectedID: deviceID)
         addEvent("已连接 \(controllerName)")
 
         guard let gamepad = controller.extendedGamepad else {
@@ -128,70 +195,74 @@ final class AppModel: ObservableObject {
             return
         }
 
-        bind(gamepad.buttonA, name: "A")
-        bind(gamepad.buttonB, name: "B")
-        bind(gamepad.buttonX, name: "X")
-        bind(gamepad.buttonY, name: "Y")
-        bind(gamepad.leftShoulder, name: "L")
-        bind(gamepad.rightShoulder, name: "R")
-        bind(gamepad.leftThumbstickButton, name: "L3")
-        bind(gamepad.rightThumbstickButton, name: "R3")
-        bind(gamepad.buttonMenu, name: "+")
-        bind(gamepad.buttonOptions, name: "−")
-        if let home = gamepad.buttonHome { bind(home, name: "HOME") }
+        bind(gamepad.buttonA, name: "A", deviceID: deviceID)
+        bind(gamepad.buttonB, name: "B", deviceID: deviceID)
+        bind(gamepad.buttonX, name: "X", deviceID: deviceID)
+        bind(gamepad.buttonY, name: "Y", deviceID: deviceID)
+        bind(gamepad.leftShoulder, name: "L", deviceID: deviceID)
+        bind(gamepad.rightShoulder, name: "R", deviceID: deviceID)
+        bind(gamepad.leftThumbstickButton, name: "L3", deviceID: deviceID)
+        bind(gamepad.rightThumbstickButton, name: "R3", deviceID: deviceID)
+        bind(gamepad.buttonMenu, name: "+", deviceID: deviceID)
+        bind(gamepad.buttonOptions, name: "−", deviceID: deviceID)
+        if let home = gamepad.buttonHome { bind(home, name: "HOME", deviceID: deviceID) }
+        if let share = controller.physicalInputProfile.buttons[GCInputButtonShare] {
+            bind(share, name: "CAPTURE", deviceID: deviceID)
+        }
 
         gamepad.leftTrigger.valueChangedHandler = { [weak self] _, value, pressed in
             Task { @MainActor in
                 self?.leftTrigger = value
-                self?.setButton("ZL", pressed: pressed)
+                self?.setButton("ZL", pressed: pressed, deviceID: deviceID)
             }
         }
         gamepad.rightTrigger.valueChangedHandler = { [weak self] _, value, pressed in
             Task { @MainActor in
                 guard let self else { return }
                 self.rightTrigger = value
-                self.setButton("ZR", pressed: pressed)
+                self.setButton("ZR", pressed: pressed, deviceID: deviceID)
             }
         }
         gamepad.leftThumbstick.valueChangedHandler = { [weak self] _, x, y in
             Task { @MainActor in
                 guard let self else { return }
                 self.leftStick = CGPoint(x: CGFloat(x), y: CGFloat(y))
-                self.updateStickDirections(x: x, y: y, left: true)
+                self.updateStickDirections(x: x, y: y, left: true, deviceID: deviceID)
             }
         }
         gamepad.rightThumbstick.valueChangedHandler = { [weak self] _, x, y in
             Task { @MainActor in
                 guard let self else { return }
                 self.rightStick = CGPoint(x: CGFloat(x), y: CGFloat(y))
-                self.updateStickDirections(x: x, y: y, left: false)
+                self.updateStickDirections(x: x, y: y, left: false, deviceID: deviceID)
             }
         }
         gamepad.dpad.valueChangedHandler = { [weak self] _, x, y in
             Task { @MainActor in
-                self?.setButton("↑", pressed: y > 0.5)
-                self?.setButton("↓", pressed: y < -0.5)
-                self?.setButton("→", pressed: x > 0.5)
-                self?.setButton("←", pressed: x < -0.5)
+                self?.setButton("↑", pressed: y > 0.5, deviceID: deviceID)
+                self?.setButton("↓", pressed: y < -0.5, deviceID: deviceID)
+                self?.setButton("→", pressed: x > 0.5, deviceID: deviceID)
+                self?.setButton("←", pressed: x < -0.5, deviceID: deviceID)
             }
         }
     }
 
-    private func bind(_ input: GCControllerButtonInput?, name: String) {
+    private func bind(_ input: GCControllerButtonInput?, name: String, deviceID: String) {
         input?.valueChangedHandler = { [weak self] _, _, pressed in
-            Task { @MainActor in self?.setButton(name, pressed: pressed) }
+            Task { @MainActor in self?.setButton(name, pressed: pressed, deviceID: deviceID) }
         }
     }
 
-    private func updateStickDirections(x: Float, y: Float, left: Bool) {
+    private func updateStickDirections(x: Float, y: Float, left: Bool, deviceID: String) {
         let controls: [(ControllerControl, Float)] = left
             ? [(.leftStickUp, y), (.leftStickDown, -y), (.leftStickLeft, -x), (.leftStickRight, x)]
             : [(.rightStickUp, y), (.rightStickDown, -y), (.rightStickLeft, -x), (.rightStickRight, x)]
         for (control, value) in controls {
-            let currentlyPressed = pressedButtons.contains(control.rawValue)
+            let currentlyPressed = pressedByDevice[deviceID, default: []].contains(control.rawValue)
             setButton(
                 control.rawValue,
-                pressed: StickDirectionResolver.isPressed(value: value, currentlyPressed: currentlyPressed)
+                pressed: StickDirectionResolver.isPressed(value: value, currentlyPressed: currentlyPressed),
+                deviceID: deviceID
             )
         }
     }
@@ -264,8 +335,13 @@ final class AppModel: ObservableObject {
             "appPath: \(bundle.bundleURL.path)",
             "macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)",
             "accessibilityTrusted: \(keyboard.isAccessibilityTrusted)",
+            "inputMonitoringGranted: \(inputMonitoringGranted)",
             "controllerConnected: \(controllerConnected)",
             "controllerName: \(controllerName)",
+            "selectedDevice: \(selectedDevice?.name ?? "none") [\(selectedDeviceID ?? "none")]",
+            "selectedDeviceKind: \(selectedDevice?.kind.rawValue ?? "none")",
+            "activeProfile: \(mappingStore.activeProfileName)",
+            "knownDevices: \(devices.map { "\($0.name):\($0.connected ? "connected" : "offline")" }.joined(separator: ", "))",
             "mappingEnabled: \(mappingEnabled)",
             "activeOutputCount: \(keyboard.activeOutputCount)",
             "frontmostApp: \(activeApplication)",
@@ -274,23 +350,26 @@ final class AppModel: ObservableObject {
         ] + configured + ["", "Recent events:"] + recentEvents).joined(separator: "\n")
     }
 
-    private func setButton(_ name: String, pressed: Bool) {
+    private func setButton(_ name: String, pressed: Bool, deviceID: String) {
+        var deviceButtons = pressedByDevice[deviceID, default: []]
         let changed: Bool
         if pressed {
-            changed = pressedButtons.insert(name).inserted
+            changed = deviceButtons.insert(name).inserted
         } else {
-            changed = pressedButtons.remove(name) != nil
+            changed = deviceButtons.remove(name) != nil
         }
+        pressedByDevice[deviceID] = deviceButtons
+        if deviceID == selectedDeviceID { pressedButtons = deviceButtons }
         guard changed else { return }
         addEvent("\(name) \(pressed ? "按下" : "松开")")
         guard let control = ControllerControl(rawValue: name) else { return }
-        if pressed { selectedControl = control }
-        dispatchMapping(control, pressed: pressed)
+        if pressed, deviceID == selectedDeviceID { selectedControl = control }
+        dispatchMapping(control, pressed: pressed, deviceID: deviceID)
     }
 
-    private func dispatchMapping(_ control: ControllerControl, pressed: Bool) {
-        let mapping = mappingStore.mapping(for: control)
-        let outputID = "controller.\(control.rawValue)"
+    private func dispatchMapping(_ control: ControllerControl, pressed: Bool, deviceID: String) {
+        let mapping = mappingStore.mapping(for: control, deviceID: deviceID)
+        let outputID = "input.\(deviceID).\(control.rawValue)"
 
         guard mappingEnabled else {
             if !pressed {
@@ -315,9 +394,17 @@ final class AppModel: ObservableObject {
                 }
                 return
             }
-            if pressed, keyboard.commitApplicationSwitchIfActive(using: shortcut) {
-                addEvent("\(control.rawValue) → 确认 App 选择")
-                return
+            if pressed {
+                switch keyboard.handleApplicationSwitcherShortcut(shortcut) {
+                case .confirmed:
+                    addEvent("\(control.rawValue) → 确认 App 选择")
+                    return
+                case .cancelled:
+                    addEvent("\(control.rawValue) → 取消 App 选择")
+                    return
+                case .none:
+                    break
+                }
             }
             switch mapping.triggerBehavior {
             case .tap:
@@ -361,6 +448,19 @@ final class AppModel: ObservableObject {
             let direction = mapping.appSwitchDirection ?? .next
             keyboard.showApplicationSwitcher(direction)
             addEvent("\(control.rawValue) → \(direction.title)")
+        case .screenshot:
+            guard pressed else { return }
+            guard keyboard.isAccessibilityTrusted else {
+                addEvent("\(control.rawValue) 截图被阻止 · 需要辅助功能权限")
+                keyboard.requestAccessibilityPermission()
+                return
+            }
+            keyboard.tapGlobal(KeyboardShortcut(
+                keyCode: 20,
+                modifierFlags: NSEvent.ModifierFlags([.command, .shift]).rawValue,
+                modifierOnly: false
+            ))
+            addEvent("\(control.rawValue) → 截取当前屏幕")
         case .shell:
             guard pressed else { return }
             let command = mapping.shellCommand.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -380,9 +480,14 @@ final class AppModel: ObservableObject {
 
     private func handleDisconnect(_ controller: GCController) {
         releaseAllOutputs()
-        controllerConnected = false
-        controllerName = "等待手柄"
-        pressedButtons.removeAll()
+        if let deviceID = controllerDeviceIDs.removeValue(forKey: ObjectIdentifier(controller)),
+           let index = devices.firstIndex(where: { $0.id == deviceID }) {
+            devices[index].connected = false
+            pressedByDevice[deviceID] = []
+        }
+        controllerConnected = devices.contains { $0.kind == .gameController && $0.connected }
+        controllerName = selectedDevice?.name ?? "等待手柄"
+        pressedButtons = selectedDeviceID.flatMap { pressedByDevice[$0] } ?? []
         leftTrigger = 0
         rightTrigger = 0
         addEvent("手柄已断开 · 按键已释放")
@@ -396,6 +501,48 @@ final class AppModel: ObservableObject {
     private func releaseAllOutputs() {
         keyboard.releaseAll()
         scroll.releaseAll()
+    }
+
+    private func updateHIDDevices(_ hidDevices: [HIDKeyboardDevice]) {
+        let connectedIDs = Set(hidDevices.map(\.descriptor.id))
+        for index in devices.indices where devices[index].kind == .hidKeyboard {
+            devices[index].connected = connectedIDs.contains(devices[index].id)
+        }
+        for device in hidDevices {
+            upsertDevice(device.descriptor)
+            mappingStore.registerDevice(device.descriptor)
+        }
+        synchronizeSelectedDevice(preferredConnectedID: hidDevices.first?.descriptor.id)
+    }
+
+    private func upsertDevice(_ device: InputDeviceDescriptor) {
+        if let index = devices.firstIndex(where: { $0.id == device.id }) {
+            devices[index] = device
+        } else {
+            devices.append(device)
+            devices.sort {
+                if $0.connected != $1.connected { return $0.connected && !$1.connected }
+                return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+        }
+    }
+
+    private func synchronizeSelectedDevice(preferredConnectedID: String?) {
+        if let savedID = mappingStore.selectedDeviceID,
+           devices.contains(where: { $0.id == savedID && $0.connected }) {
+            if selectedDeviceID != savedID { selectDevice(savedID) }
+            return
+        }
+        if selectedDeviceID == nil,
+           let deviceID = preferredConnectedID ?? devices.first(where: \.connected)?.id {
+            selectDevice(deviceID)
+        }
+    }
+
+    private static func identifierComponent(_ value: String) -> String {
+        let allowed = CharacterSet.alphanumerics
+        let scalars = value.lowercased().unicodeScalars.map { allowed.contains($0) ? Character(String($0)) : "-" }
+        return String(scalars).replacingOccurrences(of: "--", with: "-")
     }
 
     private func refreshActiveApplication() {

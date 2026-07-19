@@ -52,8 +52,11 @@ struct Controller3DView: NSViewRepresentable {
         func makeScene() -> SCNScene {
             let scene = SCNScene()
             scene.rootNode.addChildNode(modelRoot)
-            modelRoot.eulerAngles = SCNVector3(-0.12, -0.04, 0)
-            modelRoot.position = SCNVector3(0, -0.05, 0)
+            // Nintendo's published envelope is 152 × 106 × 60 mm. The stronger
+            // pitch and deeper rear shell make that thickness visible instead of
+            // presenting the controller as a flat front plate.
+            modelRoot.eulerAngles = SCNVector3(-0.18, -0.045, 0)
+            modelRoot.position = SCNVector3(0, -0.03, 0)
 
             addShell()
             addFaceControls()
@@ -83,8 +86,8 @@ struct Controller3DView: NSViewRepresentable {
 
             moveStick("LEFT_STICK", origin: SCNVector3(-1.48, 0.48, 0.58), value: leftStick)
             moveStick("RIGHT_STICK", origin: SCNVector3(0.95, -0.62, 0.58), value: rightStick)
-            controlNodes["ZL"]?.position.z = 0.03 - CGFloat(leftTrigger) * 0.10
-            controlNodes["ZR"]?.position.z = 0.03 - CGFloat(rightTrigger) * 0.10
+            controlNodes["ZL"]?.position.z = -0.32 - CGFloat(leftTrigger) * 0.10
+            controlNodes["ZR"]?.position.z = -0.32 - CGFloat(rightTrigger) * 0.10
 
             SCNTransaction.commit()
         }
@@ -106,32 +109,39 @@ struct Controller3DView: NSViewRepresentable {
                 metalness: 0.04
             )
 
-            let leftGrip = capsule(radius: 0.66, height: 2.55, material: gripMaterial)
-            leftGrip.position = SCNVector3(-1.88, -0.57, -0.20)
-            leftGrip.eulerAngles.z = -0.31
+            let leftGrip = capsule(radius: 0.59, height: 2.55, material: gripMaterial)
+            leftGrip.position = SCNVector3(-1.72, -0.52, -0.42)
+            leftGrip.eulerAngles = SCNVector3(0.04, 0, -0.23)
+            leftGrip.scale.z = 1.16
             modelRoot.addChildNode(leftGrip)
 
-            let rightGrip = capsule(radius: 0.66, height: 2.55, material: gripMaterial)
-            rightGrip.position = SCNVector3(1.88, -0.57, -0.20)
-            rightGrip.eulerAngles.z = 0.31
+            let rightGrip = capsule(radius: 0.59, height: 2.55, material: gripMaterial)
+            rightGrip.position = SCNVector3(1.72, -0.52, -0.42)
+            rightGrip.eulerAngles = SCNVector3(0.04, 0, 0.23)
+            rightGrip.scale.z = 1.16
             modelRoot.addChildNode(rightGrip)
 
-            let rear = extrudedShell(scale: 1.0, depth: 0.62, chamfer: 0.20, material: rearMaterial)
-            rear.position.z = -0.36
+            let rear = extrudedShell(scale: 1.0, depth: 0.72, chamfer: 0.24, material: rearMaterial)
+            rear.position.z = -0.58
             modelRoot.addChildNode(rear)
 
-            let face = extrudedShell(scale: 0.94, depth: 0.16, chamfer: 0.12, material: faceMaterial)
-            face.position.z = 0.24
+            let face = extrudedShell(scale: 0.94, depth: 0.20, chamfer: 0.14, material: faceMaterial)
+            face.position.z = 0.22
             modelRoot.addChildNode(face)
 
-            let centerPlate = SCNNode(geometry: SCNBox(width: 1.42, height: 1.36, length: 0.16, chamferRadius: 0.22))
+            let centerPlate = SCNNode(geometry: SCNBox(width: 1.34, height: 1.28, length: 0.12, chamferRadius: 0.26))
             centerPlate.geometry?.firstMaterial = material(
                 diffuse: NSColor(red: 0.075, green: 0.082, blue: 0.092, alpha: 1),
                 roughness: 0.30,
                 metalness: 0.36
             )
-            centerPlate.position = SCNVector3(0, 0.05, 0.45)
+            centerPlate.position = SCNVector3(0, 0.05, 0.43)
             modelRoot.addChildNode(centerPlate)
+
+            let usbPort = SCNNode(geometry: SCNBox(width: 0.48, height: 0.13, length: 0.12, chamferRadius: 0.05))
+            usbPort.geometry?.firstMaterial = material(diffuse: .black, roughness: 0.75, metalness: 0.18)
+            usbPort.position = SCNVector3(0, 1.46, -0.52)
+            modelRoot.addChildNode(usbPort)
 
             for x in [-0.18, -0.06, 0.06, 0.18] as [Float] {
                 let led = SCNNode(geometry: SCNSphere(radius: 0.027))
@@ -154,30 +164,26 @@ struct Controller3DView: NSViewRepresentable {
         }
 
         private func addCenterControls() {
-            addRoundButton("−", position: SCNVector3(-0.56, 0.78, 0.57), radius: 0.16, height: 0.11)
-            addRoundButton("+", position: SCNVector3(0.56, 0.78, 0.57), radius: 0.16, height: 0.11)
+            addSymbolButton("−", position: SCNVector3(-0.56, 0.78, 0.57), width: 0.34, height: 0.13)
+            addSymbolButton("+", position: SCNVector3(0.56, 0.78, 0.57), width: 0.34, height: 0.13)
             addRoundButton("HOME", position: SCNVector3(0.48, -0.16, 0.57), radius: 0.19, height: 0.11, label: "⌂")
-            addRoundButton("CAPTURE", position: SCNVector3(-0.48, -0.16, 0.57), radius: 0.16, height: 0.11, label: "□")
+            addSymbolButton("CAPTURE", position: SCNVector3(-0.48, -0.16, 0.57), width: 0.29, height: 0.29, label: "□")
 
-            let wordmark = textNode("AI", color: cyan, fontSize: 74)
-            wordmark.scale = SCNVector3(0.0031, 0.0031, 0.0031)
-            wordmark.position = SCNVector3(0, 0.24, 0.58)
-            modelRoot.addChildNode(wordmark)
         }
 
         private func addTriggers() {
-            addTrigger("ZL", position: SCNVector3(-1.76, 1.27, 0.03))
-            addTrigger("ZR", position: SCNVector3(1.76, 1.27, 0.03))
+            addTrigger("ZL", position: SCNVector3(-1.76, 1.27, -0.32))
+            addTrigger("ZR", position: SCNVector3(1.76, 1.27, -0.32))
 
             let leftShoulder = SCNNode(geometry: SCNBox(width: 0.92, height: 0.20, length: 0.36, chamferRadius: 0.10))
             leftShoulder.geometry?.firstMaterial = material(diffuse: buttonBlack, roughness: 0.45, metalness: 0.12)
-            leftShoulder.position = SCNVector3(-0.90, 1.35, -0.12)
+            leftShoulder.position = SCNVector3(-0.90, 1.35, -0.34)
             modelRoot.addChildNode(leftShoulder)
             controlNodes["L"] = leftShoulder
 
             let rightShoulder = SCNNode(geometry: SCNBox(width: 0.92, height: 0.20, length: 0.36, chamferRadius: 0.10))
             rightShoulder.geometry?.firstMaterial = material(diffuse: buttonBlack, roughness: 0.45, metalness: 0.12)
-            rightShoulder.position = SCNVector3(0.90, 1.35, -0.12)
+            rightShoulder.position = SCNVector3(0.90, 1.35, -0.34)
             modelRoot.addChildNode(rightShoulder)
             controlNodes["R"] = rightShoulder
         }
@@ -201,6 +207,26 @@ struct Controller3DView: NSViewRepresentable {
             let text = textNode(label ?? name, color: NSColor.white.withAlphaComponent(0.72), fontSize: 66)
             text.scale = SCNVector3(0.0024, 0.0024, 0.0024)
             text.position = SCNVector3(position.x, position.y, position.z + height / 2 + 0.012)
+            modelRoot.addChildNode(text)
+        }
+
+        private func addSymbolButton(
+            _ name: String,
+            position: SCNVector3,
+            width: CGFloat,
+            height: CGFloat,
+            label: String? = nil
+        ) {
+            let geometry = SCNBox(width: width, height: height, length: 0.11, chamferRadius: min(width, height) * 0.22)
+            geometry.firstMaterial = material(diffuse: buttonBlack, roughness: 0.32, metalness: 0.14)
+            let node = SCNNode(geometry: geometry)
+            node.position = position
+            modelRoot.addChildNode(node)
+            controlNodes[name] = node
+
+            let text = textNode(label ?? name, color: NSColor.white.withAlphaComponent(0.72), fontSize: 64)
+            text.scale = SCNVector3(0.0022, 0.0022, 0.0022)
+            text.position = SCNVector3(position.x, position.y, position.z + 0.065)
             modelRoot.addChildNode(text)
         }
 
@@ -348,8 +374,8 @@ struct Controller3DView: NSViewRepresentable {
             let rim = SCNNode()
             rim.light = SCNLight()
             rim.light?.type = .omni
-            rim.light?.color = cyan
-            rim.light?.intensity = 460
+            rim.light?.color = NSColor(white: 0.82, alpha: 1)
+            rim.light?.intensity = 180
             rim.position = SCNVector3(4.2, -1.4, 3.2)
             scene.rootNode.addChildNode(rim)
 
@@ -364,10 +390,10 @@ struct Controller3DView: NSViewRepresentable {
         private func addCamera(to scene: SCNScene) {
             let camera = SCNNode()
             camera.camera = SCNCamera()
-            camera.camera?.fieldOfView = 35
+            camera.camera?.fieldOfView = 32
             camera.camera?.zNear = 0.1
             camera.camera?.zFar = 100
-            camera.position = SCNVector3(0, 0.1, 8.6)
+            camera.position = SCNVector3(0, 0.18, 9.0)
             camera.look(at: SCNVector3(0, 0, 0))
             scene.rootNode.addChildNode(camera)
         }

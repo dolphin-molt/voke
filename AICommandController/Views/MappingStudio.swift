@@ -62,13 +62,17 @@ struct MappingStudio: View {
     @Binding var selectedControl: ControllerControl
     let accessibilityTrusted: Bool
     let openAccessibilitySettings: () -> Void
+    let controls: [ControllerControl]
+    let controlLabel: (ControllerControl) -> String
 
     @StateObject private var recorder = ShortcutRecorder()
+    @AppStorage("appearanceTheme") private var themeRawValue = AppTheme.daylight.rawValue
 
-    private let field = Color.white.opacity(0.045)
-    private let border = Color.white.opacity(0.085)
-    private let accent = Color(red: 0.58, green: 0.94, blue: 0.56)
-    private let warning = Color(red: 1.0, green: 0.70, blue: 0.28)
+    private var theme: AppTheme { AppTheme(rawValue: themeRawValue) ?? .daylight }
+    private var field: Color { theme.palette.elevated }
+    private var border: Color { theme.palette.border }
+    private var accent: Color { theme.palette.accent }
+    private var warning: Color { theme.palette.warning }
     private let modifierPresets = [
         ModifierPreset(id: "command", label: "⌘ Command", shortcut: .rightCommand),
         ModifierPreset(id: "option", label: "⌥ Option", shortcut: .rightOption),
@@ -121,6 +125,8 @@ struct MappingStudio: View {
                     scrollEditor
                 case .appSwitch:
                     appSwitchEditor
+                case .screenshot:
+                    screenshotEditor
                 case .shell:
                     shellEditor
                 }
@@ -134,7 +140,7 @@ struct MappingStudio: View {
 
     private var controlGrid: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 7)], spacing: 7) {
-            ForEach(ControllerControl.allCases) { control in
+            ForEach(controls) { control in
                 let selected = control == selectedControl
                 let configured = store.mapping(for: control).actionKind != .none
 
@@ -142,7 +148,7 @@ struct MappingStudio: View {
                     selectedControl = control
                 } label: {
                     ZStack(alignment: .topTrailing) {
-                        Text(control.compactLabel)
+                        Text(controlLabel(control))
                             .font(.system(size: 11, weight: .bold, design: .rounded))
                             .frame(maxWidth: .infinity, minHeight: 36)
                         if configured {
@@ -306,6 +312,25 @@ struct MappingStudio: View {
                 .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var screenshotEditor: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "camera.viewfinder")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(accent)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("截取当前屏幕")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("调用 macOS 系统截图并保存到系统默认位置。")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(field)
+        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 
     private var currentResult: some View {

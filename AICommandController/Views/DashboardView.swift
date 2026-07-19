@@ -3,13 +3,15 @@ import SwiftUI
 struct DashboardView: View {
     @EnvironmentObject private var model: AppModel
     @State private var showsActivity = false
+    @AppStorage("appearanceTheme") private var themeRawValue = AppTheme.daylight.rawValue
 
-    private let background = Color(red: 0.055, green: 0.059, blue: 0.067)
-    private let surface = Color(red: 0.085, green: 0.091, blue: 0.102)
-    private let elevated = Color(red: 0.108, green: 0.115, blue: 0.128)
-    private let border = Color.white.opacity(0.085)
-    private let accent = Color(red: 0.58, green: 0.94, blue: 0.56)
-    private let warning = Color(red: 1.0, green: 0.70, blue: 0.28)
+    private var theme: AppTheme { AppTheme(rawValue: themeRawValue) ?? .daylight }
+    private var background: Color { theme.palette.background }
+    private var surface: Color { theme.palette.surface }
+    private var elevated: Color { theme.palette.elevated }
+    private var border: Color { theme.palette.border }
+    private var accent: Color { theme.palette.accent }
+    private var warning: Color { theme.palette.warning }
 
     var body: some View {
         GeometryReader { geometry in
@@ -50,7 +52,7 @@ struct DashboardView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(theme.colorScheme)
     }
 
     private func header(compact: Bool) -> some View {
@@ -76,11 +78,29 @@ struct DashboardView: View {
 
             Spacer(minLength: 8)
 
+            Menu {
+                ForEach(AppTheme.allCases) { option in
+                    Button {
+                        themeRawValue = option.rawValue
+                    } label: {
+                        if option == theme {
+                            Label(option.title, systemImage: "checkmark")
+                        } else {
+                            Text(option.title)
+                        }
+                    }
+                }
+            } label: {
+                Image(systemName: "paintpalette")
+                    .frame(width: 30, height: 30)
+            }
+            .menuStyle(.borderlessButton)
+
             if !compact {
                 statusItem(
-                    icon: "gamecontroller",
-                    title: model.controllerConnected ? model.controllerName : "等待手柄",
-                    tint: model.controllerConnected ? accent : .secondary
+                    icon: model.selectedDevice?.kind.icon ?? "gamecontroller",
+                    title: model.selectedDevice?.name ?? "等待设备",
+                    tint: model.selectedDevice?.connected == true ? accent : .secondary
                 )
                 statusItem(icon: "arrow.up.forward.app", title: model.activeApplication, tint: .secondary)
             }
@@ -110,18 +130,18 @@ struct DashboardView: View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("实时手柄")
+                    Text("实时设备")
                         .font(.system(size: 17, weight: .bold, design: .rounded))
-                    Text(model.controllerConnected ? "按下任意按键即可选择并配置" : "连接手柄后即可开始")
+                    Text(model.selectedDevice?.connected == true ? "按下任意按键即可选择并配置" : "连接设备后即可开始")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 HStack(spacing: 7) {
                     Circle()
-                        .fill(model.controllerConnected ? accent : Color.secondary)
+                        .fill(model.selectedDevice?.connected == true ? accent : Color.secondary)
                         .frame(width: 7, height: 7)
-                    Text(model.controllerConnected ? "已连接" : "未连接")
+                    Text(model.selectedDevice?.connected == true ? "已连接" : "未连接")
                         .font(.system(size: 11, weight: .semibold))
                 }
                 .padding(.horizontal, 10)
@@ -131,13 +151,19 @@ struct DashboardView: View {
             }
             .padding(20)
 
-            ControllerVisual(
-                pressed: model.pressedButtons,
-                leftStick: model.leftStick,
-                rightStick: model.rightStick,
-                leftTrigger: model.leftTrigger,
-                rightTrigger: model.rightTrigger
-            )
+            Group {
+                if model.selectedDevice?.kind == .hidKeyboard {
+                    keyboardVisual
+                } else {
+                    ControllerVisual(
+                        pressed: model.pressedButtons,
+                        leftStick: model.leftStick,
+                        rightStick: model.rightStick,
+                        leftTrigger: model.leftTrigger,
+                        rightTrigger: model.rightTrigger
+                    )
+                }
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, 18)
             .padding(.vertical, 4)
@@ -172,13 +198,21 @@ struct DashboardView: View {
     private var mappingPanel: some View {
         VStack(spacing: 0) {
             ScrollView(.vertical, showsIndicators: false) {
-                MappingStudio(
-                    store: model.mappingStore,
-                    selectedControl: $model.selectedControl,
-                    accessibilityTrusted: model.keyboard.isAccessibilityTrusted,
-                    openAccessibilitySettings: model.openAccessibilitySettings
-                )
-                .padding(20)
+                VStack(spacing: 0) {
+                    deviceProfileBar
+                        .padding(.horizontal, 20)
+                        .padding(.top, 18)
+
+                    MappingStudio(
+                        store: model.mappingStore,
+                        selectedControl: $model.selectedControl,
+                        accessibilityTrusted: model.keyboard.isAccessibilityTrusted,
+                        openAccessibilitySettings: model.openAccessibilitySettings,
+                        controls: model.selectedDeviceControls,
+                        controlLabel: model.controlLabel
+                    )
+                    .padding(20)
+                }
             }
 
             Divider().overlay(border)
@@ -229,6 +263,36 @@ struct DashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(border))
     }
 
+    private var keyboardVisual: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "keyboard.fill")
+                .font(.system(size: 46, weight: .medium))
+                .foregroundStyle(accent)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 82), spacing: 12)], spacing: 12) {
+                ForEach(model.selectedDeviceControls) { control in
+                    let pressed = model.pressedButtons.contains(control.rawValue)
+                    VStack(spacing: 5) {
+                        Text(model.controlLabel(control))
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                        Text(model.mappingStore.mapping(for: control).summary)
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 54)
+                    .background(pressed ? accent : elevated)
+                    .foregroundStyle(pressed ? Color.black.opacity(0.78) : .primary)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(pressed ? accent : border))
+                }
+            }
+            Text("首次按下会学习为 K1–K12，并按设备记住。监听模式不会拦截原按键。")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+        .padding(24)
+    }
+
     private var permissionBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: "lock.shield.fill")
@@ -252,6 +316,72 @@ struct DashboardView: View {
         .background(warning.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(warning.opacity(0.25)))
+    }
+
+    private var deviceProfileBar: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: model.selectedDevice?.kind.icon ?? "gamecontroller.fill")
+                    .foregroundStyle(accent)
+                Picker("设备", selection: Binding(
+                    get: { model.selectedDeviceID ?? "" },
+                    set: model.selectDevice
+                )) {
+                    ForEach(model.devices) { device in
+                        Text("\(device.name)\(device.connected ? "" : " · 未连接")")
+                            .tag(device.id)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                Spacer()
+                Text(model.selectedDevice?.kind.title ?? "设备")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 8) {
+                TextField("方案名称", text: Binding(
+                    get: { model.mappingStore.activeProfileName },
+                    set: model.mappingStore.renameActiveProfile
+                ))
+                .textFieldStyle(.roundedBorder)
+
+                Menu {
+                    ForEach(model.mappingStore.profiles) { profile in
+                        Button(profile.name) { model.mappingStore.setActiveProfile(profile.id) }
+                    }
+                } label: {
+                    Image(systemName: "rectangle.stack")
+                }
+                .menuStyle(.borderlessButton)
+
+                Button { model.mappingStore.addProfile() } label: {
+                    Image(systemName: "plus")
+                }
+                .help("复制当前方案")
+
+                Button { model.mappingStore.deleteActiveProfile() } label: {
+                    Image(systemName: "trash")
+                }
+                .disabled(model.mappingStore.profiles.count <= 1)
+                .help("删除当前方案")
+            }
+
+            if model.selectedDevice?.kind == .hidKeyboard, !model.inputMonitoringGranted {
+                HStack(spacing: 8) {
+                    Image(systemName: "keyboard.badge.ellipsis")
+                    Text("小键盘输入需要“输入监控”权限")
+                    Spacer()
+                    Button("请求权限") { model.requestInputMonitoring() }
+                }
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(warning)
+            }
+        }
+        .padding(12)
+        .background(elevated)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func statusItem(icon: String, title: String, tint: Color) -> some View {
