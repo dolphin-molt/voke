@@ -1,5 +1,5 @@
 import XCTest
-@testable import AICommandController
+@testable import Voke
 
 @MainActor
 final class MappingStoreTests: XCTestCase {

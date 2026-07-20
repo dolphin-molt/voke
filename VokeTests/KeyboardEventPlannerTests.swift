@@ -1,6 +1,6 @@
 import AppKit
 import XCTest
-@testable import AICommandController
+@testable import Voke
 
 final class KeyboardEventPlannerTests: XCTestCase {
     func testRightControlDownCarriesSideFlagButComboUsesPortableControlFlag() throws {

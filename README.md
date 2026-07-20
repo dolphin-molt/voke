@@ -26,21 +26,21 @@
 ## 开发运行
 
 ```bash
-cd /Users/dolphin/Desktop/Dolphin/ai-command-controller
+cd /Users/dolphin/Desktop/Dolphin/voke
 xcodegen generate
-open AICommandController.xcodeproj
+open Voke.xcodeproj
 ```
 
 也可以直接构建：
 
 ```bash
-xcodebuild -project AICommandController.xcodeproj -scheme AICommandController -configuration Debug build
+xcodebuild -project Voke.xcodeproj -scheme Voke -configuration Debug build
 ```
 
 运行自动化测试：
 
 ```bash
-xcodebuild test -project AICommandController.xcodeproj -scheme AICommandController -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO
+xcodebuild test -project Voke.xcodeproj -scheme Voke -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO
 ```
 
 首次发送快捷键前，需要在“系统设置 → 隐私与安全性 → 辅助功能”中允许 Voke。

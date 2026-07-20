@@ -1,4 +1,4 @@
-name: AICommandController
+name: Voke
 options:
   bundleIdPrefix: com.dolphin
   deploymentTarget:
@@ -9,25 +9,25 @@ settings:
     SWIFT_STRICT_CONCURRENCY: minimal
     MACOSX_DEPLOYMENT_TARGET: "14.0"
 schemes:
-  AICommandController:
+  Voke:
     build:
       targets:
-        AICommandController: all
-        AICommandControllerTests: [test]
+        Voke: all
+        VokeTests: [test]
     test:
       targets:
-        - AICommandControllerTests
+        - VokeTests
 targets:
-  AICommandController:
+  Voke:
     type: application
     platform: macOS
     sources:
-      - AICommandController
+      - Voke
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dolphin.ai-command-controller
         PRODUCT_NAME: Voke
-        PRODUCT_MODULE_NAME: AICommandController
+        PRODUCT_MODULE_NAME: Voke
         CODE_SIGN_STYLE: Automatic
         ENABLE_APP_SANDBOX: NO
         GENERATE_INFOPLIST_FILE: YES
@@ -36,16 +36,16 @@ targets:
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Voke 需要识别和使用你选择的语音输入设备。
         MARKETING_VERSION: 0.3.1
         CURRENT_PROJECT_VERSION: 6
-  AICommandControllerTests:
+  VokeTests:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - AICommandControllerTests
+      - VokeTests
     dependencies:
-      - target: AICommandController
+      - target: Voke
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.dolphin.ai-command-controller.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.dolphin.voke.tests
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Voke.app/Contents/MacOS/Voke"
         BUNDLE_LOADER: "$(TEST_HOST)"

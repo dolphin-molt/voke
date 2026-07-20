@@ -15,10 +15,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7C0327D612658A78A6BB36E1"
-               BuildableName = "AICommandController.app"
-               BlueprintName = "AICommandController"
-               ReferencedContainer = "container:AICommandController.xcodeproj">
+               BlueprintIdentifier = "38F89A77A617EB90FC7ED107"
+               BuildableName = "Voke.app"
+               BlueprintName = "Voke"
+               ReferencedContainer = "container:Voke.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -29,10 +29,10 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "F9E7FB8D1A5A6C1D9213A2BE"
-               BuildableName = "AICommandControllerTests.xctest"
-               BlueprintName = "AICommandControllerTests"
-               ReferencedContainer = "container:AICommandController.xcodeproj">
+               BlueprintIdentifier = "02C7CEED9DFBD5D44B23C775"
+               BuildableName = "VokeTests.xctest"
+               BlueprintName = "VokeTests"
+               ReferencedContainer = "container:Voke.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -46,10 +46,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7C0327D612658A78A6BB36E1"
-            BuildableName = "AICommandController.app"
-            BlueprintName = "AICommandController"
-            ReferencedContainer = "container:AICommandController.xcodeproj">
+            BlueprintIdentifier = "38F89A77A617EB90FC7ED107"
+            BuildableName = "Voke.app"
+            BlueprintName = "Voke"
+            ReferencedContainer = "container:Voke.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -58,10 +58,10 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "F9E7FB8D1A5A6C1D9213A2BE"
-               BuildableName = "AICommandControllerTests.xctest"
-               BlueprintName = "AICommandControllerTests"
-               ReferencedContainer = "container:AICommandController.xcodeproj">
+               BlueprintIdentifier = "02C7CEED9DFBD5D44B23C775"
+               BuildableName = "VokeTests.xctest"
+               BlueprintName = "VokeTests"
+               ReferencedContainer = "container:Voke.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -82,10 +82,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7C0327D612658A78A6BB36E1"
-            BuildableName = "AICommandController.app"
-            BlueprintName = "AICommandController"
-            ReferencedContainer = "container:AICommandController.xcodeproj">
+            BlueprintIdentifier = "38F89A77A617EB90FC7ED107"
+            BuildableName = "Voke.app"
+            BlueprintName = "Voke"
+            ReferencedContainer = "container:Voke.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -99,10 +99,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7C0327D612658A78A6BB36E1"
-            BuildableName = "AICommandController.app"
-            BlueprintName = "AICommandController"
-            ReferencedContainer = "container:AICommandController.xcodeproj">
+            BlueprintIdentifier = "38F89A77A617EB90FC7ED107"
+            BuildableName = "Voke.app"
+            BlueprintName = "Voke"
+            ReferencedContainer = "container:Voke.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
