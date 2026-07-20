@@ -2,6 +2,8 @@
 
 把游戏手柄变成通用的 macOS 动作控制台：每个按钮和摇杆方向都可以映射成键盘操作、组合键、页面滚动、App 切换或终端命令。
 
+项目现状、已完成/未完成范围、数据迁移、风险和接手步骤见 [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md)。
+
 ## v0.3.1
 
 - 同时发现多个 macOS GameController 手柄，并在设备菜单中切换
