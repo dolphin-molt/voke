@@ -13,7 +13,7 @@ python3 -m http.server 4173 --directory site
 页面中的下载按钮固定指向 GitHub 最新 Release 的 `Voke.dmg`：
 
 ```text
-https://github.com/dolphin-molt/voke/releases/latest/download/Voke.dmg
+https://github.com/dolphin-molt/voke/releases/download/v0.1.0/Voke.dmg
 ```
 
 因此每个 GitHub Release 都应上传一个同名的 `Voke.dmg` 文件。
