@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Voke：用游戏手柄控制 Mac，把按键映射为快捷键、鼠标移动和常用动作。">
+  <meta name="theme-color" content="#f5f0df">
+  <title>Voke — 用手柄控制你的 Mac</title>
+  <link rel="icon" href="assets/voke-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="nav shell">
+    <a class="brand" href="#top" aria-label="Voke 首页">
+      <img src="assets/voke-icon.png" alt="">
+      <span>VOKE</span>
+    </a>
+    <div class="nav-actions">
+      <a class="quiet-link" href="https://github.com/dolphin-molt/voke" target="_blank" rel="noreferrer">GitHub ↗</a>
+      <a class="mini-button" href="https://github.com/dolphin-molt/voke/releases/latest/download/Voke.dmg">下载</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-copy reveal">
+        <p class="eyebrow"><i></i> VOKE FOR MACOS</p>
+        <h1>用手柄，<br><em>控制你的 Mac。</em></h1>
+        <p class="summary">把手柄按键和摇杆，变成快捷键、鼠标移动、点击、滚动和 App 切换。</p>
+        <div class="hero-actions">
+          <a class="download-button" href="https://github.com/dolphin-molt/voke/releases/latest/download/Voke.dmg">
+            <span><b>下载 Voke</b><small>macOS 14 或更高版本</small></span>
+            <strong>↓</strong>
+          </a>
+          <a class="github-button" href="https://github.com/dolphin-molt/voke" target="_blank" rel="noreferrer">查看 GitHub ↗</a>
+        </div>
+        <p class="release-note">当前为测试版，安装时可能需要在“隐私与安全性”中选择仍要打开。</p>
+      </div>
+
+      <div class="controller-card reveal" aria-label="Voke 手柄映射示意图">
+        <div class="card-top"><span>PRO CONTROLLER</span><span class="connected"><i></i> 已连接</span></div>
+        <svg class="controller" viewBox="0 0 720 520" role="img" aria-label="手绘风格游戏手柄">
+          <defs>
+            <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
+              <line x1="0" y1="0" x2="0" y2="10" stroke="#20231f" stroke-opacity=".08" stroke-width="2"/>
+            </pattern>
+          </defs>
+          <path class="ghost" d="M178 119Q256 87 360 101Q464 87 542 119Q614 151 645 263L681 420Q692 469 651 488Q609 506 577 465L511 377Q451 422 360 422Q269 422 209 377L143 465Q111 506 69 488Q28 469 39 420L75 263Q106 151 178 119Z"/>
+          <path class="body" d="M174 109Q256 82 360 96Q464 82 546 109Q615 140 639 259L670 414Q680 459 643 478Q604 497 574 454L508 365Q446 410 360 410Q274 410 212 365L146 454Q116 497 77 478Q40 459 50 414L81 259Q105 140 174 109Z"/>
+          <path class="hatching" d="M174 109Q256 82 360 96Q464 82 546 109Q615 140 639 259L670 414Q680 459 643 478Q604 497 574 454L508 365Q446 410 360 410Q274 410 212 365L146 454Q116 497 77 478Q40 459 50 414L81 259Q105 140 174 109Z"/>
+          <path class="shoulder" d="M103 132Q124 70 219 73L250 105L228 136Z"/>
+          <path class="shoulder" d="M617 132Q596 70 501 73L470 105L492 136Z"/>
+          <text x="169" y="111">L</text><text x="551" y="111">R</text>
+          <g class="stick" transform="translate(206 210)"><circle r="52"/><circle r="35"/><path d="M-18-15Q0-28 18-15M-20 0Q0-13 20 0M-18 15Q0 2 18 15"/></g>
+          <g class="stick" transform="translate(434 331)"><circle r="52"/><circle r="35"/><path d="M-18-15Q0-28 18-15M-20 0Q0-13 20 0M-18 15Q0 2 18 15"/></g>
+          <g class="dpad" transform="translate(205 325)"><path d="M-22-65H22V-22H65V22H22V65H-22V22H-65V-22H-22Z"/><path d="M0-51V51M-51 0H51"/></g>
+          <g class="face-buttons">
+            <circle cx="538" cy="178" r="28"/><circle cx="488" cy="228" r="28"/><circle class="active" cx="588" cy="228" r="28"/><circle cx="538" cy="278" r="28"/>
+            <text x="538" y="186">X</text><text x="488" y="236">Y</text><text x="588" y="236">A</text><text x="538" y="286">B</text>
+          </g>
+          <g class="small-buttons"><circle cx="317" cy="197" r="18"/><circle cx="402" cy="197" r="18"/><text x="317" y="204">−</text><text x="402" y="204">+</text></g>
+          <path class="map-line" d="M607 244Q661 279 642 339"/><circle class="map-dot" cx="607" cy="244" r="6"/>
+        </svg>
+        <div class="mapping-pill"><span>A</span><p><small>当前映射</small><b>鼠标左键</b></p><strong>↗</strong></div>
+      </div>
+    </section>
+
+    <section class="abilities shell reveal" aria-label="主要功能">
+      <article><span>01</span><b>按键映射</b><p>录制一个键或组合快捷键。</p></article>
+      <article><span>02</span><b>鼠标控制</b><p>用右摇杆移动，用按压点击。</p></article>
+      <article><span>03</span><b>后台运行</b><p>窗口关闭后仍继续响应手柄。</p></article>
+    </section>
+
+    <section class="start shell" id="start">
+      <div class="section-copy reveal">
+        <p class="eyebrow">QUICK START</p>
+        <h2>下载，拖入应用程序，<br>然后连接手柄。</h2>
+      </div>
+      <ol class="steps reveal">
+        <li><span>1</span><div><b>下载 Voke.dmg</b><p>打开安装包，把 Voke 拖入“应用程序”。</p></div></li>
+        <li><span>2</span><div><b>允许系统权限</b><p>按应用引导开启辅助功能；测试版如被拦截，请在“隐私与安全性”中仍要打开。</p></div></li>
+        <li><span>3</span><div><b>连接并设置手柄</b><p>点击手柄上的按钮，选择它要执行的动作。</p></div></li>
+      </ol>
+    </section>
+
+    <section class="contact shell reveal">
+      <img src="assets/voke-icon.png" alt="Voke">
+      <div><p>还需要别的功能？</p><h2>告诉我你想怎么控制。</h2></div>
+      <a href="https://github.com/dolphin-molt/voke/issues/new" target="_blank" rel="noreferrer">提交功能建议 ↗</a>
+    </section>
+  </main>
+
+  <footer class="shell"><span>VOKE · 2026</span><a href="https://github.com/dolphin-molt/voke" target="_blank" rel="noreferrer">github.com/dolphin-molt/voke</a></footer>
+  <script src="app.js"></script>
+</body>
+</html>

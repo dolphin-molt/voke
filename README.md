@@ -52,6 +52,14 @@ xcodebuild -project Voke.xcodeproj -scheme Voke -configuration Debug build
 
 该脚本会重新生成工程、构建 Release、复用钥匙串中的 `Voke Local Development` 固定本地签名，并替换固定安装副本。首次从旧的 ad hoc 版本迁移时仍需手动授权一次；后续覆盖安装不会主动清空 TCC 权限。
 
+生成供少量外部测试使用的未公证 DMG：
+
+```bash
+./scripts/build-test-dmg.sh
+```
+
+产物为 `dist/Voke.dmg` 和 `dist/Voke.dmg.sha256`。该包包含 Apple Silicon 与 Intel 架构，但仍使用本地自签名；测试者首次打开时需要在“系统设置 → 隐私与安全性”中明确选择仍要打开。
+
 ## 外部测试与日志
 
 设置页的“导出日志”会生成一个可直接发回的文本文件，其中包含应用版本、安装路径、macOS 版本、权限状态、设备列表、映射摘要、当前事件、跨重启持久日志和最近的 Voke 崩溃报告。终端命令正文及输出会自动隐藏。原始日志保存在：
