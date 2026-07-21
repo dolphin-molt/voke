@@ -4,7 +4,7 @@
 
 项目现状、已完成/未完成范围、数据迁移、风险和接手步骤见 [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md)。
 
-## v0.1.0（首次公开测试版）
+## v0.1.1（公开测试版）
 
 - 同时发现多个 macOS GameController 手柄，并在设备菜单中切换
 - 发现外接 HID 键盘/三键、五键小键盘；首次实际按下时学习为 K1–K12，按设备保存
@@ -58,7 +58,7 @@ xcodebuild -project Voke.xcodeproj -scheme Voke -configuration Debug build
 ./scripts/build-test-dmg.sh
 ```
 
-产物为 `dist/Voke.dmg` 和 `dist/Voke.dmg.sha256`。该包包含 Apple Silicon 与 Intel 架构，但仍使用本地自签名；测试者首次打开时需要在“系统设置 → 隐私与安全性”中明确选择仍要打开。
+产物文件名会自动包含应用版本，例如 `dist/Voke-v0.1.1.dmg` 和 `dist/Voke-v0.1.1.dmg.sha256`。该包包含 Apple Silicon 与 Intel 架构，但仍使用本地自签名；测试者首次打开时需要在“系统设置 → 隐私与安全性”中明确选择仍要打开。
 
 ## 外部测试与日志
 

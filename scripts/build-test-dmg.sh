@@ -6,8 +6,6 @@ PROJECT_ROOT="${0:A:h:h}"
 BUILD_ROOT="$PROJECT_ROOT/build-release"
 BUILT_APP="$BUILD_ROOT/Build/Products/Release/Voke.app"
 DIST_ROOT="$PROJECT_ROOT/dist"
-DMG_PATH="$DIST_ROOT/Voke.dmg"
-CHECKSUM_PATH="$DIST_ROOT/Voke.dmg.sha256"
 SIGNING_HELPER="$PROJECT_ROOT/scripts/ensure-local-signing-identity.sh"
 CERTIFICATE_NAME="Voke Local Development"
 
@@ -41,6 +39,11 @@ if [[ ! -d "$BUILT_APP" ]]; then
   exit 1
 fi
 
+VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$BUILT_APP/Contents/Info.plist")"
+DMG_BASENAME="Voke-v${VERSION}.dmg"
+DMG_PATH="$DIST_ROOT/$DMG_BASENAME"
+CHECKSUM_PATH="$DMG_PATH.sha256"
+
 PACKAGE_ROOT="$(mktemp -d /tmp/voke-dmg.XXXXXX)"
 VERIFY_MOUNT="$(mktemp -d /tmp/voke-verify.XXXXXX)"
 STAGED_APP="$PACKAGE_ROOT/Voke.app"
@@ -65,7 +68,7 @@ cp "$PROJECT_ROOT/site/安装说明.txt" "$PACKAGE_ROOT/首次打开说明.txt"
 mkdir -p "$DIST_ROOT"
 rm -f "$DMG_PATH" "$CHECKSUM_PATH"
 hdiutil create \
-  -volname "Voke" \
+  -volname "Voke $VERSION" \
   -srcfolder "$PACKAGE_ROOT" \
   -format UDZO \
   -ov \

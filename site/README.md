@@ -12,13 +12,13 @@ wrangler pages dev site \
 
 打开 <http://127.0.0.1:4173/>。
 
-页面中的下载按钮固定指向 GitHub 最新 Release 的 `Voke.dmg`：
+页面中的下载按钮固定指向带版本号的 GitHub Release 文件：
 
 ```text
-https://github.com/dolphin-molt/voke/releases/download/v0.1.0/Voke.dmg
+https://github.com/dolphin-molt/voke/releases/download/v0.1.1/Voke-v0.1.1.dmg
 ```
 
-因此每个 GitHub Release 都应上传一个同名的 `Voke.dmg` 文件。
+发布新版本时需要同时更新 Release 标签、DMG 文件名和页面下载链接，避免浏览器或 macOS 继续使用旧缓存。
 
 查看线上建议：
 
