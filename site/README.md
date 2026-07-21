@@ -25,3 +25,16 @@ https://github.com/dolphin-molt/voke/releases/download/v0.1.0/Voke.dmg
 ```bash
 wrangler d1 execute voke-feedback --remote --command "SELECT * FROM feedback ORDER BY created_at DESC;"
 ```
+
+也可以打开受密码保护的管理页：
+
+```text
+https://voke.theopcapp.com/admin/
+```
+
+管理密码与会话签名密钥保存在 Cloudflare Pages Secrets 中，不应提交到仓库：
+
+```bash
+wrangler pages secret put ADMIN_PASSWORD --project-name voke
+wrangler pages secret put ADMIN_SESSION_SECRET --project-name voke
+```

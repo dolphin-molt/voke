@@ -1,5 +1,6 @@
 .DS_Store
 .wrangler/
+.dev.vars
 .build/
 build/
 build-release/

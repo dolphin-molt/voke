@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f0df">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Voke · 用户反馈</title>
+  <link rel="icon" href="../assets/voke-icon.png">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <a class="brand" href="/" aria-label="返回 Voke 首页">
+        <img src="../assets/voke-icon.png" alt="">
+        <span><b>VOKE</b><small>PRIVATE DESK</small></span>
+      </a>
+      <div class="header-actions" id="header-actions" hidden>
+        <a class="capsule secondary" href="/api/admin/export" download>导出 CSV ↓</a>
+        <button class="capsule ink" id="logout-button" type="button">退出</button>
+      </div>
+    </header>
+
+    <section class="login-stage" id="login-stage">
+      <div class="login-note" aria-hidden="true">
+        <span>PRIVATE</span>
+        <i></i>
+        <span>VOKE</span>
+      </div>
+      <form class="login-card" id="login-form">
+        <div class="lock-mark" aria-hidden="true"><span></span></div>
+        <p class="eyebrow">OWNER ACCESS ONLY</p>
+        <h1>你的建议收件箱。</h1>
+        <p class="login-copy">输入管理密码，查看用户提交给 Voke 的反馈。</p>
+        <label>
+          <span>管理密码</span>
+          <input id="password" name="password" type="password" autocomplete="current-password" required autofocus placeholder="输入密码">
+        </label>
+        <button class="login-button" type="submit"><span>进入反馈管理</span><strong>→</strong></button>
+        <p class="form-status" id="login-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="dashboard" id="dashboard" hidden>
+      <div class="dashboard-title">
+        <div>
+          <p class="eyebrow"><i></i> FEEDBACK INBOX</p>
+          <h1>用户反馈</h1>
+          <p>最多显示最近 200 条。联系方式只在这里可见。</p>
+        </div>
+        <button class="refresh-button" id="refresh-button" type="button" aria-label="刷新反馈">↻</button>
+      </div>
+
+      <nav class="filters" id="filters" aria-label="反馈状态筛选">
+        <button class="filter active" type="button" data-status="all"><span>全部</span><b id="count-all">0</b></button>
+        <button class="filter" type="button" data-status="new"><span>新反馈</span><b id="count-new">0</b></button>
+        <button class="filter" type="button" data-status="reviewing"><span>处理中</span><b id="count-reviewing">0</b></button>
+        <button class="filter" type="button" data-status="done"><span>已完成</span><b id="count-done">0</b></button>
+      </nav>
+
+      <div class="inbox-status" id="inbox-status" role="status" aria-live="polite">正在读取反馈…</div>
+      <div class="feedback-list" id="feedback-list"></div>
+    </section>
+  </main>
+
+  <template id="feedback-template">
+    <article class="feedback-card">
+      <header>
+        <span class="status-dot"></span>
+        <time></time>
+        <b class="feedback-id"></b>
+      </header>
+      <p class="message"></p>
+      <dl>
+        <div class="identity"><dt>用户</dt><dd></dd></div>
+        <div class="contact"><dt>联系方式</dt><dd></dd></div>
+      </dl>
+      <footer>
+        <span class="source"></span>
+        <div class="status-actions" aria-label="更新处理状态">
+          <button type="button" data-next="new">新反馈</button>
+          <button type="button" data-next="reviewing">处理中</button>
+          <button type="button" data-next="done">已完成</button>
+        </div>
+      </footer>
+    </article>
+  </template>
+
+  <script src="admin.js"></script>
+</body>
+</html>
