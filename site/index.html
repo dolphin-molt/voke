@@ -98,10 +98,31 @@
       </ol>
     </section>
 
-    <section class="contact shell reveal">
-      <img src="assets/voke-icon.png" alt="Voke">
-      <div><p>还需要别的功能？</p><h2>告诉我你想怎么控制。</h2></div>
-      <a href="https://github.com/dolphin-molt/voke/issues/new" target="_blank" rel="noreferrer">提交功能建议 ↗</a>
+    <section class="contact shell reveal" id="feedback">
+      <div class="contact-heading">
+        <img src="assets/voke-icon.png" alt="Voke">
+        <div>
+          <p>还需要别的功能？</p>
+          <h2>告诉我你想怎么控制。</h2>
+          <span>建议会直接送到 Voke，不需要 GitHub 账号。</span>
+        </div>
+      </div>
+      <form class="feedback-form" id="feedback-form">
+        <label class="feedback-message">
+          <span>你的想法 <i>必填</i></span>
+          <textarea name="message" maxlength="1000" rows="4" placeholder="例如：我希望长按 ZR 时，右摇杆临时变成滚轮……" required></textarea>
+          <small><b id="message-count">0</b> / 1000</small>
+        </label>
+        <div class="feedback-meta">
+          <label><span>怎么称呼你 <i>可选</i></span><input name="name" maxlength="60" autocomplete="name" placeholder="名字或昵称"></label>
+          <label><span>方便联系你吗 <i>可选</i></span><input name="contact" maxlength="120" autocomplete="email" placeholder="邮箱、微信或其他方式"></label>
+        </div>
+        <label class="feedback-trap" aria-hidden="true">请留空<input name="website" tabindex="-1" autocomplete="off"></label>
+        <div class="feedback-submit">
+          <p class="feedback-status" id="feedback-status" role="status" aria-live="polite">提交后我会认真看每一条。</p>
+          <button type="submit"><span>提交功能建议</span><strong>↗</strong></button>
+        </div>
+      </form>
     </section>
   </main>
 

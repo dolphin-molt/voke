@@ -1,11 +1,13 @@
 # Voke 落地页
 
-这是无需构建工具的静态落地页，内容保持简短，主要介绍用手柄控制 Mac。
+这是 Voke 的轻量落地页，主要介绍用手柄控制 Mac，并提供站内功能建议表单。表单由 Cloudflare Pages Functions 接收，数据保存在 D1 的 `feedback` 表中。
 
 本地预览：
 
 ```bash
-python3 -m http.server 4173 --directory site
+wrangler pages dev site \
+  --d1 VOKE_FEEDBACK=64eda256-a054-4acb-83bc-a837de2dcb62 \
+  --port 4173
 ```
 
 打开 <http://127.0.0.1:4173/>。
@@ -17,3 +19,9 @@ https://github.com/dolphin-molt/voke/releases/download/v0.1.0/Voke.dmg
 ```
 
 因此每个 GitHub Release 都应上传一个同名的 `Voke.dmg` 文件。
+
+查看线上建议：
+
+```bash
+wrangler d1 execute voke-feedback --remote --command "SELECT * FROM feedback ORDER BY created_at DESC;"
+```

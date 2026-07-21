@@ -1,0 +1,8 @@
+name = "voke"
+pages_build_output_dir = "site"
+compatibility_date = "2026-04-28"
+
+[[d1_databases]]
+binding = "VOKE_FEEDBACK"
+database_name = "voke-feedback"
+database_id = "64eda256-a054-4acb-83bc-a837de2dcb62"
