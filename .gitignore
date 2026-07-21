@@ -4,3 +4,13 @@ build/
 DerivedData/
 xcuserdata/
 *.xcuserstate
+
+# Local previews and generated release artifacts
+.playwright-cli/
+output/
+dist/
+site/downloads/
+
+# Design prototypes and an abandoned nested site scaffold
+demos/
+landing-page/

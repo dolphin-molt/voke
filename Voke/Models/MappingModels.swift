@@ -1,49 +1,120 @@
 import AppKit
 import Foundation
 
-enum ControllerControl: String, Codable, CaseIterable, Identifiable {
-    case a = "A"
-    case b = "B"
-    case x = "X"
-    case y = "Y"
-    case leftShoulder = "L"
-    case rightShoulder = "R"
-    case leftTrigger = "ZL"
-    case rightTrigger = "ZR"
-    case leftStick = "L3"
-    case rightStick = "R3"
-    case leftStickUp = "LS ↑"
-    case leftStickDown = "LS ↓"
-    case leftStickLeft = "LS ←"
-    case leftStickRight = "LS →"
-    case rightStickUp = "RS ↑"
-    case rightStickDown = "RS ↓"
-    case rightStickLeft = "RS ←"
-    case rightStickRight = "RS →"
-    case up = "↑"
-    case down = "↓"
-    case left = "←"
-    case right = "→"
-    case menu = "+"
-    case options = "−"
-    case home = "HOME"
-    case capture = "CAPTURE"
-    case hid1 = "K1"
-    case hid2 = "K2"
-    case hid3 = "K3"
-    case hid4 = "K4"
-    case hid5 = "K5"
-    case hid6 = "K6"
-    case hid7 = "K7"
-    case hid8 = "K8"
-    case hid9 = "K9"
-    case hid10 = "K10"
-    case hid11 = "K11"
-    case hid12 = "K12"
+enum ControllerControl: Hashable, Codable, Identifiable {
+    case a, b, x, y
+    case leftShoulder, rightShoulder, leftTrigger, rightTrigger
+    case leftStick, rightStick
+    case leftStickUp, leftStickDown, leftStickLeft, leftStickRight
+    case rightStickUp, rightStickDown, rightStickLeft, rightStickRight
+    case up, down, left, right
+    case menu, options, home, capture
+    case hid1, hid2, hid3, hid4, hid5, hid6
+    case hid7, hid8, hid9, hid10, hid11, hid12
+
+    case hid(usagePage: UInt32, usage: UInt32)
+
+    static let allCases: [ControllerControl] = [
+        .a, .b, .x, .y,
+        .leftShoulder, .rightShoulder, .leftTrigger, .rightTrigger,
+        .leftStick, .rightStick,
+        .leftStickUp, .leftStickDown, .leftStickLeft, .leftStickRight,
+        .rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight,
+        .up, .down, .left, .right,
+        .menu, .options, .home, .capture,
+        .hid1, .hid2, .hid3, .hid4, .hid5, .hid6,
+        .hid7, .hid8, .hid9, .hid10, .hid11, .hid12
+    ]
+
+    var rawValue: String {
+        switch self {
+        case .a: "A"
+        case .b: "B"
+        case .x: "X"
+        case .y: "Y"
+        case .leftShoulder: "L"
+        case .rightShoulder: "R"
+        case .leftTrigger: "ZL"
+        case .rightTrigger: "ZR"
+        case .leftStick: "L3"
+        case .rightStick: "R3"
+        case .leftStickUp: "LS ↑"
+        case .leftStickDown: "LS ↓"
+        case .leftStickLeft: "LS ←"
+        case .leftStickRight: "LS →"
+        case .rightStickUp: "RS ↑"
+        case .rightStickDown: "RS ↓"
+        case .rightStickLeft: "RS ←"
+        case .rightStickRight: "RS →"
+        case .up: "↑"
+        case .down: "↓"
+        case .left: "←"
+        case .right: "→"
+        case .menu: "+"
+        case .options: "−"
+        case .home: "HOME"
+        case .capture: "CAPTURE"
+        case .hid1: "K1"
+        case .hid2: "K2"
+        case .hid3: "K3"
+        case .hid4: "K4"
+        case .hid5: "K5"
+        case .hid6: "K6"
+        case .hid7: "K7"
+        case .hid8: "K8"
+        case .hid9: "K9"
+        case .hid10: "K10"
+        case .hid11: "K11"
+        case .hid12: "K12"
+        case let .hid(usagePage, usage): "HID:\(usagePage):\(usage)"
+        }
+    }
+
+    init?(rawValue: String) {
+        if rawValue.hasPrefix("HID:") {
+            let parts = rawValue.split(separator: ":")
+            guard parts.count == 3,
+                  let usagePage = UInt32(parts[1]),
+                  let usage = UInt32(parts[2])
+            else { return nil }
+            self = .hid(usagePage: usagePage, usage: usage)
+            return
+        }
+        guard let control = Self.allCases.first(where: { $0.rawValue == rawValue }) else { return nil }
+        self = control
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+        guard let control = Self(rawValue: rawValue) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unknown control \(rawValue)")
+        }
+        self = control
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 
     var id: String { rawValue }
 
-    var compactLabel: String { self == .capture ? "截屏" : rawValue }
+    var compactLabel: String {
+        switch self {
+        case .capture:
+            "截屏"
+        case let .hid(usagePage, usage) where usagePage == 9:
+            switch usage {
+            case 1: "鼠标左键"
+            case 2: "鼠标右键"
+            case 3: "鼠标中键"
+            default: "鼠标侧键 \(usage - 3)"
+            }
+        default:
+            rawValue
+        }
+    }
 
     var group: String {
         switch self {
@@ -56,11 +127,12 @@ enum ControllerControl: String, Codable, CaseIterable, Identifiable {
         case .menu, .options, .home, .capture: "SYSTEM"
         case .hid1, .hid2, .hid3, .hid4, .hid5, .hid6,
              .hid7, .hid8, .hid9, .hid10, .hid11, .hid12: "KEYPAD"
+        case let .hid(usagePage, _): usagePage == 9 ? "MOUSE" : "KEYPAD"
         }
     }
 
     static let gamepadControls = allCases.filter { $0.group != "KEYPAD" }
-    static let hidControls: [ControllerControl] = [
+    static let legacyHIDControls: [ControllerControl] = [
         .hid1, .hid2, .hid3, .hid4, .hid5, .hid6,
         .hid7, .hid8, .hid9, .hid10, .hid11, .hid12
     ]
@@ -69,7 +141,10 @@ enum ControllerControl: String, Codable, CaseIterable, Identifiable {
 enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
     case none
     case shortcut
+    case inputSource
     case scroll
+    case mouseMove
+    case mouseClick
     case appSwitch
     case screenshot
     case shell
@@ -80,7 +155,10 @@ enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .none: "无动作"
         case .shortcut: "快捷键"
+        case .inputSource: "切换中英文"
         case .scroll: "页面滚动"
+        case .mouseMove: "移动鼠标"
+        case .mouseClick: "鼠标左键"
         case .appSwitch: "切换 App"
         case .screenshot: "截取屏幕"
         case .shell: "终端命令"
@@ -150,6 +228,12 @@ struct KeyboardShortcut: Codable, Equatable {
         keyCode: 0x3E,
         modifierFlags: NSEvent.ModifierFlags.control.rawValue,
         modifierOnly: true
+    )
+
+    static let escape = KeyboardShortcut(
+        keyCode: 53,
+        modifierFlags: 0,
+        modifierOnly: false
     )
 
     var displayName: String {
@@ -238,7 +322,10 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
         switch actionKind {
         case .none: "未配置"
         case .shortcut: shortcut?.displayName ?? "等待录制"
+        case .inputSource: "中 / EN"
         case .scroll: "滚动\((scrollDirection ?? control.defaultScrollDirection ?? .down).title)"
+        case .mouseMove: "移动鼠标"
+        case .mouseClick: "鼠标左键"
         case .appSwitch: (appSwitchDirection ?? .next).title
         case .screenshot: "保存当前屏幕"
         case .shell: shellCommand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "等待命令" : "$ \(shellCommand)"
@@ -259,9 +346,35 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
 enum InputDeviceKind: String, Codable {
     case gameController
     case hidKeyboard
+    case hidMouse
+    case hidComposite
 
-    var title: String { self == .gameController ? "手柄" : "小键盘" }
-    var icon: String { self == .gameController ? "gamecontroller.fill" : "keyboard.fill" }
+    var title: String {
+        switch self {
+        case .gameController: "手柄"
+        case .hidKeyboard: "键盘"
+        case .hidMouse: "鼠标"
+        case .hidComposite: "键鼠设备"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .gameController: "gamecontroller.fill"
+        case .hidKeyboard: "keyboard.fill"
+        case .hidMouse: "computermouse.fill"
+        case .hidComposite: "keyboard.badge.ellipsis"
+        }
+    }
+
+    var isHID: Bool { self != .gameController }
+}
+
+enum HIDCapability: String, Codable, Hashable {
+    case keyboard
+    case mouse
+    case consumerControls
+    case vendorDefined
 }
 
 struct InputDeviceDescriptor: Identifiable, Equatable {
@@ -271,6 +384,13 @@ struct InputDeviceDescriptor: Identifiable, Equatable {
     var connected: Bool
     var controls: [ControllerControl]
     var controlLabels: [ControllerControl: String] = [:]
+    var manufacturer: String? = nil
+    var product: String? = nil
+    var transport: String? = nil
+    var vendorID: Int? = nil
+    var productID: Int? = nil
+    var capabilities: Set<HIDCapability> = []
+    var declaredButtonCount: Int = 0
 }
 
 struct MappingProfile: Codable, Identifiable, Equatable {

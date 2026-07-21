@@ -61,6 +61,12 @@ final class KeyboardEventPlannerTests: XCTestCase {
         XCTAssertTrue(planner.repeatPulse(id: "zr").isEmpty)
     }
 
+    func testEscapeIsARecordableNormalKey() {
+        XCTAssertEqual(KeyboardShortcut.escape.keyCode, 53)
+        XCTAssertFalse(KeyboardShortcut.escape.modifierOnly)
+        XCTAssertEqual(KeyboardShortcut.escape.displayName, "Esc")
+    }
+
     func testAppSwitcherKeepsCommandHeldUntilConfirmation() throws {
         var planner = KeyboardEventPlanner()
         let command = KeyboardShortcut(

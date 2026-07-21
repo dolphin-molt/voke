@@ -20,7 +20,7 @@ final class MappingStoreTests: XCTestCase {
         super.tearDown()
     }
 
-    func testNewStoreDefaultsSticksToScrollAndAppSwitch() {
+    func testNewStoreDefaultsSticksToScrollAndMouse() {
         let store = MappingStore(defaults: defaults)
         store.registerDevice(gamepad(id: "gamepad.one"))
 
@@ -29,9 +29,11 @@ final class MappingStoreTests: XCTestCase {
         XCTAssertEqual(store.mapping(for: .leftStickDown).scrollDirection, .down)
         XCTAssertEqual(store.mapping(for: .leftStickLeft).scrollDirection, .left)
         XCTAssertEqual(store.mapping(for: .leftStickRight).scrollDirection, .right)
-        XCTAssertEqual(store.mapping(for: .rightStickLeft).appSwitchDirection, .previous)
-        XCTAssertEqual(store.mapping(for: .rightStickRight).appSwitchDirection, .next)
-        XCTAssertEqual(store.mapping(for: .rightStickUp).actionKind, .none)
+        XCTAssertEqual(store.mapping(for: .rightStickLeft).actionKind, .mouseMove)
+        XCTAssertEqual(store.mapping(for: .rightStickRight).actionKind, .mouseMove)
+        XCTAssertEqual(store.mapping(for: .rightStickUp).actionKind, .mouseMove)
+        XCTAssertEqual(store.mapping(for: .rightStickDown).actionKind, .mouseMove)
+        XCTAssertEqual(store.mapping(for: .rightStick).actionKind, .mouseClick)
         XCTAssertEqual(store.mapping(for: .capture).actionKind, .screenshot)
     }
 
@@ -55,6 +57,63 @@ final class MappingStoreTests: XCTestCase {
         XCTAssertEqual(destination.mappings.count, ControllerControl.allCases.count)
     }
 
+    func testOldUnmodifiedRightStickDefaultsMigrateToMouseControl() {
+        let original = MappingStore(defaults: defaults)
+        let device = gamepad(id: "gamepad.one")
+        original.registerDevice(device)
+        original.update(.rightStickUp) { $0.actionKind = .none }
+        original.update(.rightStickDown) { $0.actionKind = .none }
+        original.update(.rightStickLeft) {
+            $0.actionKind = .appSwitch
+            $0.appSwitchDirection = .previous
+        }
+        original.update(.rightStickRight) {
+            $0.actionKind = .appSwitch
+            $0.appSwitchDirection = .next
+        }
+        original.update(.rightStick) { $0.actionKind = .none }
+        defaults.set(true, forKey: "mouseControlsMigration.v1")
+
+        let reloaded = MappingStore(defaults: defaults)
+        reloaded.registerDevice(device)
+
+        XCTAssertEqual(reloaded.mapping(for: .rightStickUp).actionKind, .mouseMove)
+        XCTAssertEqual(reloaded.mapping(for: .rightStickDown).actionKind, .mouseMove)
+        XCTAssertEqual(reloaded.mapping(for: .rightStickLeft).actionKind, .mouseMove)
+        XCTAssertEqual(reloaded.mapping(for: .rightStickRight).actionKind, .mouseMove)
+        XCTAssertEqual(reloaded.mapping(for: .rightStick).actionKind, .mouseClick)
+    }
+
+    func testCustomizedRightStickIsNotOverwrittenByMigration() {
+        let original = MappingStore(defaults: defaults)
+        let device = gamepad(id: "gamepad.one")
+        original.registerDevice(device)
+        original.update(.rightStick) {
+            $0.actionKind = .screenshot
+        }
+        defaults.set(true, forKey: "mouseControlsMigration.v1")
+
+        let reloaded = MappingStore(defaults: defaults)
+        reloaded.registerDevice(device)
+
+        XCTAssertEqual(reloaded.mapping(for: .rightStick).actionKind, .screenshot)
+    }
+
+    func testOneTimeMouseUpgradeAppliesThenStopsOverwriting() {
+        let original = MappingStore(defaults: defaults)
+        let device = gamepad(id: "gamepad.one")
+        original.registerDevice(device)
+        original.update(.rightStick) { $0.actionKind = .screenshot }
+
+        let upgraded = MappingStore(defaults: defaults)
+        XCTAssertEqual(upgraded.mapping(for: .rightStick).actionKind, .mouseClick)
+        XCTAssertEqual(upgraded.mapping(for: .rightStickUp).actionKind, .mouseMove)
+
+        upgraded.update(.rightStick) { $0.actionKind = .screenshot }
+        let reloaded = MappingStore(defaults: defaults)
+        XCTAssertEqual(reloaded.mapping(for: .rightStick).actionKind, .screenshot)
+    }
+
     func testImportRejectsUnsupportedVersionWithoutChangingMappings() throws {
         let store = MappingStore(defaults: defaults)
         store.registerDevice(gamepad(id: "gamepad.one"))
@@ -65,6 +124,23 @@ final class MappingStoreTests: XCTestCase {
 
         XCTAssertThrowsError(try store.importData(encoder.encode(backup)))
         XCTAssertEqual(store.mappings, original)
+    }
+
+    func testInputSourceActionSurvivesBackupRoundTrip() throws {
+        let source = MappingStore(defaults: defaults)
+        source.registerDevice(gamepad(id: "gamepad.one"))
+        source.update(.home) { mapping in
+            mapping.actionKind = .inputSource
+        }
+
+        let secondSuite = "MappingStoreTests.\(UUID().uuidString)"
+        let secondDefaults = try XCTUnwrap(UserDefaults(suiteName: secondSuite))
+        defer { secondDefaults.removePersistentDomain(forName: secondSuite) }
+        let destination = MappingStore(defaults: secondDefaults)
+        try destination.importData(source.exportData())
+
+        XCTAssertEqual(destination.mapping(for: .home).actionKind, .inputSource)
+        XCTAssertEqual(destination.mapping(for: .home).summary, "中 / EN")
     }
 
     func testDevicesKeepIndependentMappings() {

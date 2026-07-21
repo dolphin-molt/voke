@@ -13,6 +13,14 @@ final class AppModel: ObservableObject {
     @Published var rightStick = CGPoint.zero
     @Published var leftTrigger: Float = 0
     @Published var rightTrigger: Float = 0
+    @Published var launchMappingAutomatically = UserDefaults.standard.object(forKey: "launchMappingAutomatically.v1") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(launchMappingAutomatically, forKey: "launchMappingAutomatically.v1")
+            if launchMappingAutomatically { mappingEnabled = true }
+        }
+    }
+    @Published private(set) var launchAtLoginEnabled = false
+    @Published private(set) var launchAtLoginStatus = "正在读取状态"
     @Published var mappingEnabled = false {
         didSet {
             if !mappingEnabled {
@@ -23,7 +31,7 @@ final class AppModel: ObservableObject {
     }
     @Published var events: [ControlEvent] = []
     @Published var audioDevices: [AudioDeviceInfo] = []
-    @Published var activeApplication = "AI COMMAND"
+    @Published var activeApplication = "桌面"
     @Published var selectedControl: ControllerControl = .rightTrigger
     @Published private(set) var devices: [InputDeviceDescriptor] = []
     @Published private(set) var selectedDeviceID: String?
@@ -33,7 +41,11 @@ final class AppModel: ObservableObject {
     private let audio = AudioDeviceService()
     private let shell = ShellCommandService()
     private let scroll = ScrollOutputService()
-    private let hid = HIDKeyboardService()
+    private let mouse = MouseOutputService()
+    private let inputSource = InputSourceService()
+    private let launchAtLogin = LaunchAtLoginService()
+    private let diagnosticLog = DiagnosticLogStore()
+    private let hid = HIDInputService()
     private var controllerDeviceIDs: [ObjectIdentifier: String] = [:]
     private var pressedByDevice: [String: Set<String>] = [:]
     private var observers: [NSObjectProtocol] = []
@@ -57,7 +69,7 @@ final class AppModel: ObservableObject {
         hid.onDevicesChanged = { [weak self] devices in
             self?.updateHIDDevices(devices)
         }
-        hid.onKeyChanged = { [weak self] deviceID, control, pressed in
+        hid.onControlChanged = { [weak self] deviceID, control, pressed in
             self?.setButton(control.rawValue, pressed: pressed, deviceID: deviceID)
         }
     }
@@ -65,6 +77,8 @@ final class AppModel: ObservableObject {
     func start() {
         guard !started else { return }
         started = true
+        mappingEnabled = launchMappingAutomatically
+        refreshLaunchAtLoginStatus()
         // Since macOS 11.3, GameController stops delivering input while the app
         // is not frontmost unless background monitoring is explicitly enabled.
         // This app is designed to control whichever application is in front.
@@ -117,7 +131,21 @@ final class AppModel: ObservableObject {
 
     func requestInputMonitoring() {
         hid.requestInputMonitoring()
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
+            NSWorkspace.shared.open(url)
+        }
         objectWillChange.send()
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            try launchAtLogin.setEnabled(enabled)
+            refreshLaunchAtLoginStatus()
+            addEvent(enabled ? "已启用登录时自动启动" : "已关闭登录时自动启动")
+        } catch {
+            refreshLaunchAtLoginStatus()
+            addEvent("无法修改登录启动项 · \(error.localizedDescription)")
+        }
     }
 
     func selectDevice(_ deviceID: String) {
@@ -234,6 +262,11 @@ final class AppModel: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 self.rightStick = CGPoint(x: CGFloat(x), y: CGFloat(y))
+                self.mouse.updateStick(
+                    x: x,
+                    y: y,
+                    enabled: self.mappingEnabled && self.rightStickControlsMouse(deviceID: deviceID)
+                )
                 self.updateStickDirections(x: x, y: y, left: false, deviceID: deviceID)
             }
         }
@@ -270,7 +303,7 @@ final class AppModel: ObservableObject {
     func exportMappings() {
         let panel = NSSavePanel()
         panel.title = "导出手柄配置"
-        panel.nameFieldStringValue = "AI-Command-Controller-配置.json"
+        panel.nameFieldStringValue = "Voke-配置.json"
         panel.allowedContentTypes = [.json]
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
@@ -296,11 +329,19 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func copyDiagnostics() {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(diagnosticReport(), forType: .string)
-        addEvent("诊断信息已复制")
+    func exportDiagnostics() {
+        let panel = NSSavePanel()
+        panel.title = "导出 Voke 日志"
+        panel.nameFieldStringValue = "Voke-诊断-\(Self.exportTimestamp()).txt"
+        panel.allowedContentTypes = [.plainText]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let contents = diagnosticLog.exportText(diagnosticReport: diagnosticReport())
+            try contents.write(to: url, atomically: true, encoding: .utf8)
+            addEvent("诊断日志已导出 · \(url.lastPathComponent)")
+        } catch {
+            addEvent("诊断日志导出失败 · \(error.localizedDescription)")
+        }
     }
 
     func diagnosticReport() -> String {
@@ -308,24 +349,15 @@ final class AppModel: ObservableObject {
         let shortVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
         let buildVersion = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
         let bundleIdentifier = bundle.bundleIdentifier ?? "unknown"
-        let configured = ControllerControl.allCases.compactMap { control -> String? in
-            let mapping = mappingStore.mapping(for: control)
+        let configured = mappingStore.mappings.values.sorted { $0.control.rawValue < $1.control.rawValue }.compactMap { mapping -> String? in
             guard mapping.actionKind != .none else { return nil }
             if mapping.actionKind == .shell {
-                return "- \(control.rawValue): terminal command [redacted]"
+                return "- \(mapping.control.rawValue): terminal command [redacted]"
             }
-            return "- \(control.rawValue): \(mapping.summary) [\(mapping.triggerBehavior.rawValue)]"
+            return "- \(mapping.control.rawValue): \(mapping.summary) [\(mapping.triggerBehavior.rawValue)]"
         }
         let recentEvents = events.prefix(20).map {
-            let message: String
-            if $0.message.contains("→ $") {
-                message = "terminal command invoked [redacted]"
-            } else if $0.message.hasPrefix("命令退出") {
-                message = "terminal command completed [output redacted]"
-            } else {
-                message = $0.message
-            }
-            return "- \($0.date.formatted(.iso8601)): \(message)"
+            "- \($0.date.formatted(.iso8601)): \(DiagnosticLogStore.redact($0.message))"
         }
         return ([
             "Voke 诊断",
@@ -345,6 +377,7 @@ final class AppModel: ObservableObject {
             "mappingEnabled: \(mappingEnabled)",
             "activeOutputCount: \(keyboard.activeOutputCount)",
             "frontmostApp: \(activeApplication)",
+            "persistentLogDirectory: \(diagnosticLog.logDirectoryPath)",
             "",
             "Configured mappings:"
         ] + configured + ["", "Recent events:"] + recentEvents).joined(separator: "\n")
@@ -423,6 +456,13 @@ final class AppModel: ObservableObject {
                     addEvent("\(control.rawValue) → \(shortcut.displayName) UP")
                 }
             }
+        case .inputSource:
+            guard pressed else { return }
+            if let selectedName = inputSource.toggleChineseEnglish() {
+                addEvent("\(control.rawValue) → 切换到 \(selectedName)")
+            } else {
+                addEvent("\(control.rawValue) → 未找到可切换的中英文输入源")
+            }
         case .scroll:
             guard keyboard.isAccessibilityTrusted else {
                 if pressed {
@@ -438,6 +478,19 @@ final class AppModel: ObservableObject {
             } else {
                 scroll.release(id: outputID)
             }
+        case .mouseMove:
+            // Raw thumbstick values drive the cursor continuously in the
+            // controller callback; directional transitions only update UI.
+            return
+        case .mouseClick:
+            guard pressed else { return }
+            guard keyboard.isAccessibilityTrusted else {
+                addEvent("\(control.rawValue) 点击被阻止 · 需要辅助功能权限")
+                keyboard.requestAccessibilityPermission()
+                return
+            }
+            mouse.clickLeft()
+            addEvent("\(control.rawValue) → 鼠标左键")
         case .appSwitch:
             guard pressed else { return }
             guard keyboard.isAccessibilityTrusted else {
@@ -501,11 +554,17 @@ final class AppModel: ObservableObject {
     private func releaseAllOutputs() {
         keyboard.releaseAll()
         scroll.releaseAll()
+        mouse.stopMoving()
     }
 
-    private func updateHIDDevices(_ hidDevices: [HIDKeyboardDevice]) {
+    private func rightStickControlsMouse(deviceID: String) -> Bool {
+        [ControllerControl.rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight]
+            .contains { mappingStore.mapping(for: $0, deviceID: deviceID).actionKind == .mouseMove }
+    }
+
+    private func updateHIDDevices(_ hidDevices: [HIDInputDevice]) {
         let connectedIDs = Set(hidDevices.map(\.descriptor.id))
-        for index in devices.indices where devices[index].kind == .hidKeyboard {
+        for index in devices.indices where devices[index].kind.isHID {
             devices[index].connected = connectedIDs.contains(devices[index].id)
         }
         for device in hidDevices {
@@ -513,6 +572,11 @@ final class AppModel: ObservableObject {
             mappingStore.registerDevice(device.descriptor)
         }
         synchronizeSelectedDevice(preferredConnectedID: hidDevices.first?.descriptor.id)
+        if let selectedDevice, selectedDevice.kind.isHID,
+           !selectedDevice.controls.isEmpty,
+           !selectedDevice.controls.contains(selectedControl) {
+            selectedControl = selectedDevice.controls[0]
+        }
     }
 
     private func upsertDevice(_ device: InputDeviceDescriptor) {
@@ -549,9 +613,23 @@ final class AppModel: ObservableObject {
         activeApplication = NSWorkspace.shared.frontmostApplication?.localizedName ?? "桌面"
     }
 
+    private func refreshLaunchAtLoginStatus() {
+        launchAtLoginEnabled = launchAtLogin.isEnabled
+        launchAtLoginStatus = launchAtLogin.statusText
+    }
+
     private func addEvent(_ message: String) {
-        events.insert(ControlEvent(message: message), at: 0)
+        let event = ControlEvent(message: message)
+        events.insert(event, at: 0)
         if events.count > 100 { events.removeLast(events.count - 100) }
+        diagnosticLog.record(message, at: event.date)
+    }
+
+    private static func exportTimestamp() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        return formatter.string(from: Date())
     }
 }
 

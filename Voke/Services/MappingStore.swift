@@ -46,6 +46,7 @@ final class MappingStore: ObservableObject {
     private let legacyDefaultsKey = "controllerMappings.v1"
     private let configurationsKey = "deviceConfigurations.v2"
     private let selectedDeviceKey = "selectedInputDevice.v2"
+    private let mouseControlsMigrationKey = "mouseControlsMigration.v1"
     private let defaults: UserDefaults
     private var pendingLegacyMappings: [ButtonMapping]?
 
@@ -72,10 +73,15 @@ final class MappingStore: ObservableObject {
         if var existing = configurations[device.id] {
             existing.deviceName = device.name
             existing.deviceKind = device.kind
-            configurations[device.id] = normalized(existing)
+            configurations[device.id] = addingControls(
+                device.controls,
+                to: migratedMouseDefaultsIfNeeded(normalized(existing))
+            )
         } else {
-            let mappings = pendingLegacyMappings ?? Self.defaultMappings(for: device.kind).values.map { $0 }
+            var mappings = pendingLegacyMappings ?? Self.defaultMappings(for: device.kind).values.map { $0 }
             pendingLegacyMappings = nil
+            let existingControls = Set(mappings.map(\.control))
+            mappings.append(contentsOf: device.controls.filter { !existingControls.contains($0) }.map(ButtonMapping.empty))
             let profile = MappingProfile(
                 id: UUID(),
                 name: "默认方案",
@@ -121,7 +127,7 @@ final class MappingStore: ObservableObject {
         else { return }
         var dictionary = Dictionary(uniqueKeysWithValues: configuration.profiles[index].mappings.map { ($0.control, $0) })
         dictionary[mapping.control] = mapping
-        configuration.profiles[index].mappings = ControllerControl.allCases.compactMap { dictionary[$0] }
+        configuration.profiles[index].mappings = orderedMappings(dictionary)
         configurations[deviceID] = configuration
         save()
     }
@@ -137,8 +143,14 @@ final class MappingStore: ObservableObject {
               var configuration = configurations[selectedDeviceID],
               let index = configuration.profiles.firstIndex(where: { $0.id == configuration.activeProfileID })
         else { return }
-        configuration.profiles[index].mappings = ControllerControl.allCases.compactMap {
-            Self.defaultMappings(for: configuration.deviceKind)[$0]
+        if configuration.deviceKind == .gameController {
+            configuration.profiles[index].mappings = ControllerControl.allCases.compactMap {
+                Self.defaultMappings(for: configuration.deviceKind)[$0]
+            }
+        } else {
+            configuration.profiles[index].mappings = configuration.profiles[index].mappings.map {
+                .empty(for: $0.control)
+            }
         }
         configurations[selectedDeviceID] = configuration
         save()
@@ -264,10 +276,17 @@ final class MappingStore: ObservableObject {
     private func load() {
         if let data = defaults.data(forKey: configurationsKey),
            let decoded = try? JSONDecoder().decode([DeviceMappingConfiguration].self, from: data) {
-            configurations = Dictionary(uniqueKeysWithValues: decoded.map { ($0.deviceID, normalized($0)) })
+            configurations = Dictionary(uniqueKeysWithValues: decoded.map {
+                ($0.deviceID, migratedMouseDefaultsIfNeeded(normalized($0)))
+            })
+            if !defaults.bool(forKey: mouseControlsMigrationKey) {
+                configurations = configurations.mapValues(applyingMouseControls)
+                defaults.set(true, forKey: mouseControlsMigrationKey)
+            }
             let savedSelection = defaults.string(forKey: selectedDeviceKey)
             selectedDeviceID = savedSelection.flatMap { configurations[$0] == nil ? nil : $0 }
                 ?? decoded.first?.deviceID
+            save()
             return
         }
 
@@ -311,15 +330,15 @@ final class MappingStore: ObservableObject {
             result[mapping.control] = mapping
         }
         let defaults = Self.defaultMappings(for: kind)
-        for control in ControllerControl.allCases where result[control] == nil {
+        for control in defaults.keys where result[control] == nil {
             result[control] = defaults[control] ?? .empty(for: control)
         }
-        return ControllerControl.allCases.compactMap { result[$0] }
+        return orderedMappings(result)
     }
 
     private static func defaultMappings(for kind: InputDeviceKind) -> [ControllerControl: ButtonMapping] {
+        guard kind == .gameController else { return [:] }
         var result = Dictionary(uniqueKeysWithValues: ControllerControl.allCases.map { ($0, ButtonMapping.empty(for: $0)) })
-        guard kind == .gameController else { return result }
 
         result[.rightTrigger] = ButtonMapping(
             control: .rightTrigger,
@@ -338,21 +357,21 @@ final class MappingStore: ObservableObject {
                 scrollDirection: control.defaultScrollDirection
             )
         }
-        result[.rightStickLeft] = ButtonMapping(
-            control: .rightStickLeft,
-            actionKind: .appSwitch,
+        for control in [ControllerControl.rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight] {
+            result[control] = ButtonMapping(
+                control: control,
+                actionKind: .mouseMove,
+                shortcut: nil,
+                triggerBehavior: .hold,
+                shellCommand: ""
+            )
+        }
+        result[.rightStick] = ButtonMapping(
+            control: .rightStick,
+            actionKind: .mouseClick,
             shortcut: nil,
             triggerBehavior: .tap,
-            shellCommand: "",
-            appSwitchDirection: .previous
-        )
-        result[.rightStickRight] = ButtonMapping(
-            control: .rightStickRight,
-            actionKind: .appSwitch,
-            shortcut: nil,
-            triggerBehavior: .tap,
-            shellCommand: "",
-            appSwitchDirection: .next
+            shellCommand: ""
         )
         result[.capture] = ButtonMapping(
             control: .capture,
@@ -361,6 +380,90 @@ final class MappingStore: ObservableObject {
             triggerBehavior: .tap,
             shellCommand: ""
         )
+        return result
+    }
+
+    private func migratedMouseDefaultsIfNeeded(_ configuration: DeviceMappingConfiguration) -> DeviceMappingConfiguration {
+        guard configuration.deviceKind == .gameController else { return configuration }
+        var result = configuration
+        for index in result.profiles.indices {
+            var mappings = Dictionary(uniqueKeysWithValues: result.profiles[index].mappings.map { ($0.control, $0) })
+            let usesOldDefaults = mappings[.rightStickUp]?.actionKind == MappingActionKind.none
+                && mappings[.rightStickDown]?.actionKind == MappingActionKind.none
+                && mappings[.rightStickLeft]?.actionKind == .appSwitch
+                && mappings[.rightStickRight]?.actionKind == .appSwitch
+                && mappings[.rightStick]?.actionKind == MappingActionKind.none
+            guard usesOldDefaults else { continue }
+
+            for control in [ControllerControl.rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight] {
+                mappings[control] = ButtonMapping(
+                    control: control,
+                    actionKind: .mouseMove,
+                    shortcut: nil,
+                    triggerBehavior: .hold,
+                    shellCommand: ""
+                )
+            }
+            mappings[.rightStick] = ButtonMapping(
+                control: .rightStick,
+                actionKind: .mouseClick,
+                shortcut: nil,
+                triggerBehavior: .tap,
+                shellCommand: ""
+            )
+            result.profiles[index].mappings = orderedMappings(mappings)
+        }
+        return result
+    }
+
+    private func applyingMouseControls(_ configuration: DeviceMappingConfiguration) -> DeviceMappingConfiguration {
+        guard configuration.deviceKind == .gameController else { return configuration }
+        var result = configuration
+        for index in result.profiles.indices {
+            var mappings = Dictionary(uniqueKeysWithValues: result.profiles[index].mappings.map { ($0.control, $0) })
+            for control in [ControllerControl.rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight] {
+                mappings[control] = ButtonMapping(
+                    control: control,
+                    actionKind: .mouseMove,
+                    shortcut: nil,
+                    triggerBehavior: .hold,
+                    shellCommand: ""
+                )
+            }
+            mappings[.rightStick] = ButtonMapping(
+                control: .rightStick,
+                actionKind: .mouseClick,
+                shortcut: nil,
+                triggerBehavior: .tap,
+                shellCommand: ""
+            )
+            result.profiles[index].mappings = orderedMappings(mappings)
+        }
+        return result
+    }
+
+    private func orderedMappings(_ mappings: [ControllerControl: ButtonMapping]) -> [ButtonMapping] {
+        let builtIn = ControllerControl.allCases.compactMap { mappings[$0] }
+        let known = Set(ControllerControl.allCases)
+        let dynamic = mappings
+            .filter { !known.contains($0.key) }
+            .sorted { $0.key.rawValue < $1.key.rawValue }
+            .map(\.value)
+        return builtIn + dynamic
+    }
+
+    private func addingControls(
+        _ controls: [ControllerControl],
+        to configuration: DeviceMappingConfiguration
+    ) -> DeviceMappingConfiguration {
+        var result = configuration
+        for index in result.profiles.indices {
+            var mappings = Dictionary(uniqueKeysWithValues: result.profiles[index].mappings.map { ($0.control, $0) })
+            for control in controls where mappings[control] == nil {
+                mappings[control] = .empty(for: control)
+            }
+            result.profiles[index].mappings = orderedMappings(mappings)
+        }
         return result
     }
 }

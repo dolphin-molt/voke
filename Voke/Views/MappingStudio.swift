@@ -18,10 +18,6 @@ final class ShortcutRecorder: ObservableObject {
             let flags = event.modifierFlags.intersection([.command, .shift, .option, .control, .function])
 
             if event.type == .keyDown {
-                if event.keyCode == 53, flags.isEmpty {
-                    self.stop()
-                    return nil
-                }
                 self.finish(KeyboardShortcut(keyCode: event.keyCode, modifierFlags: flags.rawValue, modifierOnly: false))
                 return nil
             }
@@ -66,6 +62,7 @@ struct MappingStudio: View {
     let controlLabel: (ControllerControl) -> String
 
     @StateObject private var recorder = ShortcutRecorder()
+    @State private var demoPressed = false
     @AppStorage("appearanceTheme") private var themeRawValue = AppTheme.daylight.rawValue
 
     private var theme: AppTheme { AppTheme(rawValue: themeRawValue) ?? .daylight }
@@ -73,99 +70,151 @@ struct MappingStudio: View {
     private var border: Color { theme.palette.border }
     private var accent: Color { theme.palette.accent }
     private var warning: Color { theme.palette.warning }
+    private var ink: Color { theme.palette.ink }
     private let modifierPresets = [
         ModifierPreset(id: "command", label: "⌘ Command", shortcut: .rightCommand),
         ModifierPreset(id: "option", label: "⌥ Option", shortcut: .rightOption),
         ModifierPreset(id: "shift", label: "⇧ Shift", shortcut: .rightShift),
-        ModifierPreset(id: "control", label: "⌃ Control", shortcut: .rightControl)
+        ModifierPreset(id: "control", label: "⌃ Control", shortcut: .rightControl),
+        ModifierPreset(id: "escape", label: "Esc 退出", shortcut: .escape)
     ]
 
     private var mapping: ButtonMapping { store.mapping(for: selectedControl) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("按键映射")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                    Text("按钮和左右摇杆方向都可以独立设置")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Text(selectedControl.rawValue)
-                    .font(.system(size: 16, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.black.opacity(0.78))
-                    .frame(minWidth: 42, minHeight: 34)
-                    .padding(.horizontal, 3)
-                    .background(accent)
-                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-            }
+        GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: 17) {
+                selectedHero
+                actionSelector
 
-            controlGrid
-
-            VStack(alignment: .leading, spacing: 10) {
-                label("执行什么")
-                Picker("执行什么", selection: actionKindBinding) {
-                    ForEach(MappingActionKind.allCases) { kind in
-                        Text(kind.title).tag(kind)
+                Group {
+                    switch mapping.actionKind {
+                    case .none:
+                        emptyState
+                    case .shortcut:
+                        shortcutEditor
+                    case .inputSource:
+                        inputSourceEditor
+                    case .scroll:
+                        scrollEditor
+                    case .mouseMove:
+                        mouseMoveEditor
+                    case .mouseClick:
+                        mouseClickEditor
+                    case .appSwitch:
+                        appSwitchEditor
+                    case .screenshot:
+                        screenshotEditor
+                    case .shell:
+                        shellEditor
                     }
                 }
-                .pickerStyle(.menu)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
 
-            Group {
-                switch mapping.actionKind {
-                case .none:
-                    emptyState
-                case .shortcut:
-                    shortcutEditor
-                case .scroll:
-                    scrollEditor
-                case .appSwitch:
-                    appSwitchEditor
-                case .screenshot:
-                    screenshotEditor
-                case .shell:
-                    shellEditor
+                if geometry.size.height >= 620 {
+                    demoPressButton
                 }
+                Spacer(minLength: 4)
+                currentResult
             }
-
-            currentResult
         }
         .onChange(of: selectedControl) { recorder.stop() }
         .onDisappear { recorder.stop() }
     }
 
-    private var controlGrid: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 7)], spacing: 7) {
-            ForEach(controls) { control in
-                let selected = control == selectedControl
-                let configured = store.mapping(for: control).actionKind != .none
+    private var selectedHero: some View {
+        HStack(spacing: 0) {
+            Text(compactControlLabel(selectedControl))
+                .font(.system(size: 18, weight: .black, design: .rounded))
+                .foregroundStyle(ink)
+                .frame(minWidth: 58, minHeight: 42)
+                .padding(.horizontal, 4)
+                .background(warning)
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 20,
+                        bottomLeadingRadius: 17,
+                        bottomTrailingRadius: 22,
+                        topTrailingRadius: 18,
+                        style: .continuous
+                    )
+                )
+                .overlay(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 20,
+                        bottomLeadingRadius: 17,
+                        bottomTrailingRadius: 22,
+                        topTrailingRadius: 18,
+                        style: .continuous
+                    )
+                    .stroke(ink, lineWidth: 1.7)
+                )
+                .rotationEffect(.degrees(-2))
+                .shadow(color: ink.opacity(0.14), radius: 0, x: 3, y: 4)
 
-                Button {
-                    selectedControl = control
-                } label: {
-                    ZStack(alignment: .topTrailing) {
-                        Text(controlLabel(control))
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .frame(maxWidth: .infinity, minHeight: 36)
-                        if configured {
-                            Circle()
-                                .fill(selected ? Color.black.opacity(0.55) : accent)
-                                .frame(width: 6, height: 6)
-                                .padding(5)
-                        }
-                    }
-                    .foregroundStyle(selected ? Color.black.opacity(0.8) : .primary)
-                    .background(selected ? accent : field)
-                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).stroke(selected ? accent : border))
-                }
-                .buttonStyle(.plain)
-            }
+            Spacer(minLength: 0)
         }
+    }
+
+    private var actionSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            label("执行什么")
+            HStack(spacing: 4) {
+                actionCategoryButton("快捷键", active: mapping.actionKind == .shortcut) {
+                    actionKindBinding.wrappedValue = .shortcut
+                }
+                .frame(maxWidth: .infinity)
+
+                Menu {
+                    Button("切换中英文") { actionKindBinding.wrappedValue = .inputSource }
+                    Button("页面滚动") { actionKindBinding.wrappedValue = .scroll }
+                    if isRightStickDirection(selectedControl) {
+                        Button("移动鼠标") { actionKindBinding.wrappedValue = .mouseMove }
+                    }
+                    Button("鼠标左键") { actionKindBinding.wrappedValue = .mouseClick }
+                    Button("切换 App") { actionKindBinding.wrappedValue = .appSwitch }
+                    Button("截取屏幕") { actionKindBinding.wrappedValue = .screenshot }
+                } label: {
+                    categoryLabel("系统", active: isSystemAction)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .frame(maxWidth: .infinity)
+
+                Menu {
+                    Button("无动作") { actionKindBinding.wrappedValue = .none }
+                    Button("终端命令") { actionKindBinding.wrappedValue = .shell }
+                } label: {
+                    categoryLabel("更多", active: isMoreAction)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .frame(maxWidth: .infinity)
+            }
+            .padding(4)
+            .background(ink.opacity(0.06))
+            .clipShape(Capsule())
+        }
+    }
+
+    private var isSystemAction: Bool {
+        [.inputSource, .scroll, .mouseMove, .mouseClick, .appSwitch, .screenshot].contains(mapping.actionKind)
+    }
+
+    private var isMoreAction: Bool { [.none, .shell].contains(mapping.actionKind) }
+
+    private func actionCategoryButton(_ title: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) { categoryLabel(title, active: active) }
+            .buttonStyle(.plain)
+    }
+
+    private func categoryLabel(_ title: String, active: Bool) -> some View {
+        Text(title)
+            .font(.system(size: 9, weight: .bold, design: .rounded))
+            .foregroundStyle(active ? ink : .secondary)
+            .frame(maxWidth: .infinity, minHeight: 31)
+            .background(active ? theme.palette.surface.opacity(0.88) : .clear)
+            .clipShape(Capsule())
+            .shadow(color: active ? ink.opacity(0.10) : .clear, radius: 0, x: 2, y: 3)
     }
 
     private var emptyState: some View {
@@ -188,9 +237,9 @@ struct MappingStudio: View {
     }
 
     private var shortcutEditor: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 8) {
-                label("快捷键")
+                label("当前快捷键")
                 Button {
                     if recorder.isRecording {
                         recorder.stop()
@@ -204,22 +253,55 @@ struct MappingStudio: View {
                     }
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: recorder.isRecording ? "record.circle.fill" : "keyboard")
-                            .foregroundStyle(recorder.isRecording ? warning : accent)
+                        Image(systemName: recorder.isRecording ? "record.circle.fill" : "keyboard.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(recorder.isRecording ? warning : Color(red: 0.192, green: 0.373, blue: 0.255))
+                            .frame(width: 33, height: 33)
+                            .background(accent.opacity(0.27))
+                            .clipShape(Circle())
                         Text(recorder.isRecording ? "现在按下快捷键…" : (mapping.shortcut?.displayName ?? "点击录制快捷键"))
-                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                            .font(.system(size: 15, weight: .black, design: .monospaced))
+                            .lineLimit(1)
                         Spacer()
-                        Text(recorder.isRecording ? "ESC 取消" : "录制")
-                            .font(.system(size: 9, weight: .semibold))
+                        Text(recorder.isRecording ? "取消" : "重新录制")
+                            .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(.secondary)
+                            .padding(.horizontal, 12)
+                            .frame(height: 30)
+                            .background(theme.palette.surface.opacity(0.72))
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(border))
                     }
-                    .padding(.horizontal, 13)
-                    .frame(height: 44)
-                    .background(field)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(recorder.isRecording ? warning : border))
+                    .padding(14)
+                    .frame(minHeight: 63)
+                    .background(theme.palette.surface.opacity(0.52))
+                    .clipShape(
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: 23,
+                            bottomLeadingRadius: 19,
+                            bottomTrailingRadius: 25,
+                            topTrailingRadius: 20,
+                            style: .continuous
+                        )
+                    )
+                    .overlay(
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: 23,
+                            bottomLeadingRadius: 19,
+                            bottomTrailingRadius: 25,
+                            topTrailingRadius: 20,
+                            style: .continuous
+                        )
+                        .stroke(recorder.isRecording ? warning : ink.opacity(0.28), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    )
                 }
                 .buttonStyle(.plain)
+
+                if recorder.isRecording {
+                    Button("取消录制") { recorder.stop() }
+                        .buttonStyle(.link)
+                        .font(.system(size: 10, weight: .semibold))
+                }
 
                 label("常用修饰键")
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 7) {
@@ -231,12 +313,12 @@ struct MappingStudio: View {
                             }
                         } label: {
                             Text(preset.label)
-                                .font(.system(size: 10, weight: .semibold))
-                                .frame(maxWidth: .infinity, minHeight: 30)
+                                .font(.system(size: 9, weight: .bold))
+                                .frame(maxWidth: .infinity, minHeight: 35)
                                 .background(mapping.shortcut == preset.shortcut ? accent.opacity(0.18) : field)
-                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .clipShape(Capsule())
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    Capsule()
                                         .stroke(mapping.shortcut == preset.shortcut ? accent.opacity(0.65) : border)
                                 )
                         }
@@ -247,22 +329,45 @@ struct MappingStudio: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 label("触发方式")
-                Picker("触发方式", selection: behaviorBinding) {
+                HStack(spacing: 4) {
                     ForEach(TriggerBehavior.allCases) { behavior in
-                        Text(behavior.title).tag(behavior)
+                        Button {
+                            behaviorBinding.wrappedValue = behavior
+                        } label: {
+                            Text(behavior.title)
+                                .font(.system(size: 9, weight: .bold))
+                                .frame(maxWidth: .infinity, minHeight: 31)
+                                .background(mapping.triggerBehavior == behavior ? theme.palette.surface.opacity(0.88) : .clear)
+                                .clipShape(Capsule())
+                                .shadow(color: mapping.triggerBehavior == behavior ? ink.opacity(0.10) : .clear, radius: 0, x: 2, y: 3)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
-                .labelsHidden()
-                .pickerStyle(.segmented)
-            }
-
-            if !accessibilityTrusted {
-                Button("授权后才能发送快捷键") { openAccessibilitySettings() }
-                    .buttonStyle(.link)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(warning)
+                .padding(4)
+                .background(ink.opacity(0.06))
+                .clipShape(Capsule())
             }
         }
+    }
+
+    private var inputSourceEditor: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "character.bubble.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(accent)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("中文 ↔ English")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("直接在 macOS 已启用的中文和英文输入源之间切换。")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(field)
+        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 
     private var shellEditor: some View {
@@ -296,6 +401,44 @@ struct MappingStudio: View {
                 .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var mouseMoveEditor: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "cursorarrow.motionlines")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(accent)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("摇杆控制光标")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("轻推慢移，推到底加速；松开立即停止。")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(field)
+        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+    }
+
+    private var mouseClickEditor: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "cursorarrow.click.2")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(accent)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("鼠标左键单击")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("按下手柄按钮时，在当前光标位置点击一次。")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(field)
+        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 
     private var appSwitchEditor: some View {
@@ -337,18 +480,37 @@ struct MappingStudio: View {
         HStack(spacing: 10) {
             Image(systemName: mapping.actionKind == .none ? "minus" : "arrow.right")
                 .foregroundStyle(mapping.actionKind == .none ? .secondary : accent)
-            Text("按下 \(selectedControl.rawValue)")
+            Text("按下 \(controlLabel(selectedControl))")
                 .foregroundStyle(.secondary)
             Spacer()
             Text(mapping.summary)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
                 .lineLimit(1)
         }
-        .font(.system(size: 10, weight: .medium))
-        .padding(.horizontal, 12)
-        .frame(height: 38)
-        .background(Color.black.opacity(0.16))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .font(.system(size: 10, weight: .bold))
+        .padding(.horizontal, 16)
+        .frame(height: 54)
+        .background(ink.opacity(0.07))
+        .clipShape(Capsule())
+    }
+
+    private var demoPressButton: some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.12)) { demoPressed = true }
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(180))
+                withAnimation(.easeOut(duration: 0.16)) { demoPressed = false }
+            }
+        } label: {
+            Text(demoPressed ? "正在按下 \(compactControlLabel(selectedControl))" : "演示按下当前按钮")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(Color(red: 0.208, green: 0.416, blue: 0.275))
+                .frame(maxWidth: .infinity, minHeight: 37)
+                .background(accent.opacity(demoPressed ? 0.32 : 0.16))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color(red: 0.263, green: 0.557, blue: 0.365), style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+        }
+        .buttonStyle(.plain)
     }
 
     private var actionKindBinding: Binding<MappingActionKind> {
@@ -356,6 +518,16 @@ struct MappingStudio: View {
             get: { mapping.actionKind },
             set: { value in
                 recorder.stop()
+                if value == .mouseMove, isRightStickDirection(selectedControl) {
+                    let controls = [ControllerControl.rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight]
+                    for control in controls {
+                        store.update(control) { mapping in
+                            mapping.actionKind = .mouseMove
+                            mapping.triggerBehavior = .hold
+                        }
+                    }
+                    return
+                }
                 store.update(selectedControl) { mapping in
                     mapping.actionKind = value
                     if value == .scroll, mapping.scrollDirection == nil {
@@ -401,6 +573,24 @@ struct MappingStudio: View {
         Text(text)
             .font(.system(size: 10, weight: .semibold))
             .foregroundStyle(.secondary)
+    }
+
+    private func compactControlLabel(_ control: ControllerControl) -> String {
+        switch control {
+        case .leftStickUp: "L↑"
+        case .leftStickDown: "L↓"
+        case .leftStickLeft: "L←"
+        case .leftStickRight: "L→"
+        case .rightStickUp: "R↑"
+        case .rightStickDown: "R↓"
+        case .rightStickLeft: "R←"
+        case .rightStickRight: "R→"
+        default: controlLabel(control)
+        }
+    }
+
+    private func isRightStickDirection(_ control: ControllerControl) -> Bool {
+        [.rightStickUp, .rightStickDown, .rightStickLeft, .rightStickRight].contains(control)
     }
 }
 

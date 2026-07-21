@@ -9,21 +9,34 @@
 /* Begin PBXBuildFile section */
 		06B1D734C5D3E77C8A580B56 /* KeyboardEventPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E663130BA128A712904063C1 /* KeyboardEventPlanner.swift */; };
 		09145438B06CFAA7CBEBABA3 /* KeyboardEventPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DAFBFBBDE4228CA290F036 /* KeyboardEventPlannerTests.swift */; };
+		0D88BA72EBBEB59D29C9E1F1 /* ControllerMappingSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FBE10DEB60D78B380B0A3B9 /* ControllerMappingSurface.swift */; };
+		14CA55104C2E2B8425B55773 /* AppThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2990D09E4ED5FF7DDA073FB0 /* AppThemeTests.swift */; };
 		15535B834B247C0D841B4977 /* MappingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3A244BF54B2A30D08B5A41 /* MappingStoreTests.swift */; };
 		1865C56E55B3A56495B12870 /* KeyboardOutputService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75381AE625960EC3C4A99E47 /* KeyboardOutputService.swift */; };
+		27B13B7FE6A2513800E884F5 /* InputSourceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ED5B19A2C4E1E14C5F95053 /* InputSourceService.swift */; };
 		2AE3601448243DA0817CEEF9 /* HIDKeyboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84AC10C99A001F0589C87716 /* HIDKeyboardService.swift */; };
 		2E1A854976857BA1B280435F /* VokeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD056B63C753A9DFDDF1C3D /* VokeApp.swift */; };
 		3187D00FCF90F1A9B9BC514D /* MappingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49331F087CC73AE5A617375F /* MappingStore.swift */; };
+		35CDCCD7005196429E7BB81F /* MouseMappingSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD763C5033AA4244797FBA37 /* MouseMappingSurface.swift */; };
 		442F1D8CC6A50F4F58CC7E76 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E690602228D86C770DE361 /* DashboardView.swift */; };
 		63AB797E23DB1CE2EAD7D48F /* MappingStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB80A2E844101037CE3D4C4 /* MappingStudio.swift */; };
+		7C4A8F95BBC12BDD2F8A2218 /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B79132C266B875A325A292 /* LaunchAtLoginService.swift */; };
+		7F43CCF627A777553F588351 /* SettingsPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A687DADD43D9C4C95E673736 /* SettingsPanel.swift */; };
 		8924A98BD6EFC434B7DACDB1 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC448C165BA2A3F9C6A96E6D /* AppTheme.swift */; };
 		8E36C8240BC3C2BF701F91C0 /* MappingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B86A0FB923DA62C0EEF1F0FA /* MappingModels.swift */; };
 		93FF3BE6BA3F7E175782D2A0 /* Controller3DView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FF64FA99AA736FADD782490 /* Controller3DView.swift */; };
 		95BF19CE39A8517EFA857BF5 /* ShellCommandService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 079D1E0043E4EC34A55B4702 /* ShellCommandService.swift */; };
 		9F8AE8FBE6E46FEA079E1B21 /* AudioDeviceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1290C361DD933133B183485C /* AudioDeviceService.swift */; };
+		B41650428A60E5463E936761 /* KeyboardMappingSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 469B4195F82C0743028716F2 /* KeyboardMappingSurface.swift */; };
 		BBC29D920D53EC90C4CD97F7 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6CABE46B0A061C81D24BFD3 /* AppModel.swift */; };
 		C9A630D599F2187694F5DA5F /* ControllerVisual.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D57D388B557F66DF5B61974 /* ControllerVisual.swift */; };
 		CAE9FD86027387B89E5AAE6B /* ScrollOutputService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1484B5B5E7B312785DD445E8 /* ScrollOutputService.swift */; };
+		CB6B42F591F24EECF9275F04 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6E1F2D64722623C8A55EE387 /* Assets.xcassets */; };
+		D3E04BC9E175228E0B16B0E2 /* DiagnosticLogStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5020BF02C382C5F2C215FEF6 /* DiagnosticLogStoreTests.swift */; };
+		D588203FC828790BB39B7B03 /* HIDControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D0720A6EB5C0AE8AAC614BF /* HIDControlTests.swift */; };
+		E3B75EC8869B1488B74738F9 /* DiagnosticLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F83CA799B34B04812F2B06D9 /* DiagnosticLogStore.swift */; };
+		E7DB0C30F3A4D0C1BF34CE24 /* MouseOutputService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1985B4CADBC0024B4D1CA49 /* MouseOutputService.swift */; };
+		FD610569510CB321066FBD50 /* MouseMotionPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D2E5D2F6DF3596A7C1E85D4 /* MouseMotionPlannerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,24 +51,37 @@
 
 /* Begin PBXFileReference section */
 		079D1E0043E4EC34A55B4702 /* ShellCommandService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellCommandService.swift; sourceTree = "<group>"; };
+		0D2E5D2F6DF3596A7C1E85D4 /* MouseMotionPlannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseMotionPlannerTests.swift; sourceTree = "<group>"; };
 		1290C361DD933133B183485C /* AudioDeviceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDeviceService.swift; sourceTree = "<group>"; };
 		1484B5B5E7B312785DD445E8 /* ScrollOutputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollOutputService.swift; sourceTree = "<group>"; };
+		1D0720A6EB5C0AE8AAC614BF /* HIDControlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDControlTests.swift; sourceTree = "<group>"; };
+		2990D09E4ED5FF7DDA073FB0 /* AppThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppThemeTests.swift; sourceTree = "<group>"; };
 		3F72DD9E3CFE0B019A12FE37 /* Voke.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Voke.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		469B4195F82C0743028716F2 /* KeyboardMappingSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardMappingSurface.swift; sourceTree = "<group>"; };
 		49331F087CC73AE5A617375F /* MappingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingStore.swift; sourceTree = "<group>"; };
+		5020BF02C382C5F2C215FEF6 /* DiagnosticLogStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLogStoreTests.swift; sourceTree = "<group>"; };
 		5B3A244BF54B2A30D08B5A41 /* MappingStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingStoreTests.swift; sourceTree = "<group>"; };
 		6D57D388B557F66DF5B61974 /* ControllerVisual.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllerVisual.swift; sourceTree = "<group>"; };
+		6E1F2D64722623C8A55EE387 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6FBE10DEB60D78B380B0A3B9 /* ControllerMappingSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllerMappingSurface.swift; sourceTree = "<group>"; };
 		75381AE625960EC3C4A99E47 /* KeyboardOutputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardOutputService.swift; sourceTree = "<group>"; };
 		84AC10C99A001F0589C87716 /* HIDKeyboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDKeyboardService.swift; sourceTree = "<group>"; };
 		8CB80A2E844101037CE3D4C4 /* MappingStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingStudio.swift; sourceTree = "<group>"; };
+		8ED5B19A2C4E1E14C5F95053 /* InputSourceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceService.swift; sourceTree = "<group>"; };
 		90DAFBFBBDE4228CA290F036 /* KeyboardEventPlannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardEventPlannerTests.swift; sourceTree = "<group>"; };
 		9FF64FA99AA736FADD782490 /* Controller3DView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controller3DView.swift; sourceTree = "<group>"; };
+		A1985B4CADBC0024B4D1CA49 /* MouseOutputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseOutputService.swift; sourceTree = "<group>"; };
+		A687DADD43D9C4C95E673736 /* SettingsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPanel.swift; sourceTree = "<group>"; };
 		ABD056B63C753A9DFDDF1C3D /* VokeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VokeApp.swift; sourceTree = "<group>"; };
 		AC448C165BA2A3F9C6A96E6D /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		B86A0FB923DA62C0EEF1F0FA /* MappingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MappingModels.swift; sourceTree = "<group>"; };
 		C6CABE46B0A061C81D24BFD3 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		CD4E6115210005C5ACBAB39B /* VokeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VokeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD763C5033AA4244797FBA37 /* MouseMappingSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseMappingSurface.swift; sourceTree = "<group>"; };
 		D0E690602228D86C770DE361 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		E663130BA128A712904063C1 /* KeyboardEventPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardEventPlanner.swift; sourceTree = "<group>"; };
+		F2B79132C266B875A325A292 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
+		F83CA799B34B04812F2B06D9 /* DiagnosticLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLogStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -81,9 +107,13 @@
 			isa = PBXGroup;
 			children = (
 				9FF64FA99AA736FADD782490 /* Controller3DView.swift */,
+				6FBE10DEB60D78B380B0A3B9 /* ControllerMappingSurface.swift */,
 				6D57D388B557F66DF5B61974 /* ControllerVisual.swift */,
 				D0E690602228D86C770DE361 /* DashboardView.swift */,
+				469B4195F82C0743028716F2 /* KeyboardMappingSurface.swift */,
 				8CB80A2E844101037CE3D4C4 /* MappingStudio.swift */,
+				CD763C5033AA4244797FBA37 /* MouseMappingSurface.swift */,
+				A687DADD43D9C4C95E673736 /* SettingsPanel.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -92,10 +122,14 @@
 			isa = PBXGroup;
 			children = (
 				1290C361DD933133B183485C /* AudioDeviceService.swift */,
+				F83CA799B34B04812F2B06D9 /* DiagnosticLogStore.swift */,
 				84AC10C99A001F0589C87716 /* HIDKeyboardService.swift */,
+				8ED5B19A2C4E1E14C5F95053 /* InputSourceService.swift */,
 				E663130BA128A712904063C1 /* KeyboardEventPlanner.swift */,
 				75381AE625960EC3C4A99E47 /* KeyboardOutputService.swift */,
+				F2B79132C266B875A325A292 /* LaunchAtLoginService.swift */,
 				49331F087CC73AE5A617375F /* MappingStore.swift */,
+				A1985B4CADBC0024B4D1CA49 /* MouseOutputService.swift */,
 				1484B5B5E7B312785DD445E8 /* ScrollOutputService.swift */,
 				079D1E0043E4EC34A55B4702 /* ShellCommandService.swift */,
 			);
@@ -105,8 +139,12 @@
 		B02757286E564A2E322213E1 /* VokeTests */ = {
 			isa = PBXGroup;
 			children = (
+				2990D09E4ED5FF7DDA073FB0 /* AppThemeTests.swift */,
+				5020BF02C382C5F2C215FEF6 /* DiagnosticLogStoreTests.swift */,
+				1D0720A6EB5C0AE8AAC614BF /* HIDControlTests.swift */,
 				90DAFBFBBDE4228CA290F036 /* KeyboardEventPlannerTests.swift */,
 				5B3A244BF54B2A30D08B5A41 /* MappingStoreTests.swift */,
+				0D2E5D2F6DF3596A7C1E85D4 /* MouseMotionPlannerTests.swift */,
 			);
 			path = VokeTests;
 			sourceTree = "<group>";
@@ -124,6 +162,7 @@
 			isa = PBXGroup;
 			children = (
 				C6CABE46B0A061C81D24BFD3 /* AppModel.swift */,
+				6E1F2D64722623C8A55EE387 /* Assets.xcassets */,
 				ABD056B63C753A9DFDDF1C3D /* VokeApp.swift */,
 				59BA5738A929F5C37B7B05B4 /* Models */,
 				A147204261657CAC2EB24FB3 /* Services */,
@@ -158,6 +197,7 @@
 			buildConfigurationList = 275A3D3BF58CC3A94271DE18 /* Build configuration list for PBXNativeTarget "Voke" */;
 			buildPhases = (
 				3417434FDC2A43326247190C /* Sources */,
+				C6E39EA2C5CE28A9FF8F6F35 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -204,6 +244,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		C6E39EA2C5CE28A9FF8F6F35 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB6B42F591F24EECF9275F04 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		3417434FDC2A43326247190C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -213,15 +264,23 @@
 				8924A98BD6EFC434B7DACDB1 /* AppTheme.swift in Sources */,
 				9F8AE8FBE6E46FEA079E1B21 /* AudioDeviceService.swift in Sources */,
 				93FF3BE6BA3F7E175782D2A0 /* Controller3DView.swift in Sources */,
+				0D88BA72EBBEB59D29C9E1F1 /* ControllerMappingSurface.swift in Sources */,
 				C9A630D599F2187694F5DA5F /* ControllerVisual.swift in Sources */,
 				442F1D8CC6A50F4F58CC7E76 /* DashboardView.swift in Sources */,
+				E3B75EC8869B1488B74738F9 /* DiagnosticLogStore.swift in Sources */,
 				2AE3601448243DA0817CEEF9 /* HIDKeyboardService.swift in Sources */,
+				27B13B7FE6A2513800E884F5 /* InputSourceService.swift in Sources */,
 				06B1D734C5D3E77C8A580B56 /* KeyboardEventPlanner.swift in Sources */,
+				B41650428A60E5463E936761 /* KeyboardMappingSurface.swift in Sources */,
 				1865C56E55B3A56495B12870 /* KeyboardOutputService.swift in Sources */,
+				7C4A8F95BBC12BDD2F8A2218 /* LaunchAtLoginService.swift in Sources */,
 				8E36C8240BC3C2BF701F91C0 /* MappingModels.swift in Sources */,
 				3187D00FCF90F1A9B9BC514D /* MappingStore.swift in Sources */,
 				63AB797E23DB1CE2EAD7D48F /* MappingStudio.swift in Sources */,
+				35CDCCD7005196429E7BB81F /* MouseMappingSurface.swift in Sources */,
+				E7DB0C30F3A4D0C1BF34CE24 /* MouseOutputService.swift in Sources */,
 				CAE9FD86027387B89E5AAE6B /* ScrollOutputService.swift in Sources */,
+				7F43CCF627A777553F588351 /* SettingsPanel.swift in Sources */,
 				95BF19CE39A8517EFA857BF5 /* ShellCommandService.swift in Sources */,
 				2E1A854976857BA1B280435F /* VokeApp.swift in Sources */,
 			);
@@ -231,8 +290,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				14CA55104C2E2B8425B55773 /* AppThemeTests.swift in Sources */,
+				D3E04BC9E175228E0B16B0E2 /* DiagnosticLogStoreTests.swift in Sources */,
+				D588203FC828790BB39B7B03 /* HIDControlTests.swift in Sources */,
 				09145438B06CFAA7CBEBABA3 /* KeyboardEventPlannerTests.swift in Sources */,
 				15535B834B247C0D841B4977 /* MappingStoreTests.swift in Sources */,
+				FD610569510CB321066FBD50 /* MouseMotionPlannerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -334,7 +397,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Voke;
@@ -432,7 +495,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Voke;
