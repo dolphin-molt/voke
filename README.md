@@ -4,7 +4,7 @@
 
 项目现状、已完成/未完成范围、数据迁移、风险和接手步骤见 [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md)。
 
-## v0.3.1
+## v0.1.0（首次公开测试版）
 
 - 同时发现多个 macOS GameController 手柄，并在设备菜单中切换
 - 发现外接 HID 键盘/三键、五键小键盘；首次实际按下时学习为 K1–K12，按设备保存
