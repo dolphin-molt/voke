@@ -34,8 +34,8 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Voke
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Voke 需要识别和使用你选择的语音输入设备。
-        MARKETING_VERSION: 0.1.1
-        CURRENT_PROJECT_VERSION: 8
+        MARKETING_VERSION: 0.4.0
+        CURRENT_PROJECT_VERSION: 9
   VokeTests:
     type: bundle.unit-test
     platform: macOS

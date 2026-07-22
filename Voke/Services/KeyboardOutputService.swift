@@ -31,11 +31,18 @@ final class KeyboardOutputService: ObservableObject {
     }
 
     func tap(_ shortcut: KeyboardShortcut) {
-        tap(shortcut, targetPID: deliveryTarget(for: shortcut))
+        tapGlobal(shortcut)
     }
 
     func tapGlobal(_ shortcut: KeyboardShortcut) {
-        tap(shortcut, targetPID: nil)
+        guard isAccessibilityTrusted else { return }
+        let events = planner.tap(shortcut)
+        guard events.count == 2 else { return }
+        post(events[0])
+        Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(60))
+            self?.post(events[1])
+        }
     }
 
     func showApplicationSwitcher(_ direction: AppSwitchDirection) {
@@ -87,28 +94,16 @@ final class KeyboardOutputService: ObservableObject {
         return .none
     }
 
-    private func tap(_ shortcut: KeyboardShortcut, targetPID: pid_t?) {
-        guard isAccessibilityTrusted else { return }
-        let events = planner.tap(shortcut, targetPID: targetPID)
-        guard events.count == 2 else { return }
-        post(events[0])
-        Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(60))
-            self?.post(events[1])
-        }
-    }
-
     func resolvedDisplayName(for shortcut: KeyboardShortcut) -> String {
         guard !shortcut.modifierOnly else { return shortcut.displayName }
         return planner.resolvedDisplayName(for: shortcut)
     }
 
-    func press(_ shortcut: KeyboardShortcut, id: String) {
+    func press(_ shortcut: KeyboardShortcut, id: String, repeats: Bool = true) {
         guard !planner.contains(id), isAccessibilityTrusted else { return }
-        let targetPID = deliveryTarget(for: shortcut)
-        guard let event = planner.press(shortcut, id: id, targetPID: targetPID) else { return }
+        guard let event = planner.press(shortcut, id: id) else { return }
         post(event)
-        if !shortcut.modifierOnly {
+        if repeats && !shortcut.modifierOnly {
             startRepeating(id: id)
         }
         activeOutputCount = planner.activeCount
@@ -144,14 +139,6 @@ final class KeyboardOutputService: ObservableObject {
         }
     }
 
-    private func deliveryTarget(for shortcut: KeyboardShortcut) -> pid_t? {
-        guard !shortcut.modifierOnly,
-              let app = NSWorkspace.shared.frontmostApplication,
-              app.processIdentifier != ProcessInfo.processInfo.processIdentifier
-        else { return nil }
-        return app.processIdentifier
-    }
-
     private func post(_ planned: PlannedKeyboardEvent) {
         guard let source = CGEventSource(stateID: .combinedSessionState),
               let event = CGEvent(
@@ -164,11 +151,10 @@ final class KeyboardOutputService: ObservableObject {
             event.type = .flagsChanged
         }
         event.flags = CGEventFlags(rawValue: UInt64(planned.flags))
-        if let targetPID = planned.targetPID {
-            event.postToPid(targetPID)
-        } else {
-            event.post(tap: .cghidEventTap)
-        }
+        // System-level posting matches a physical keyboard event. Targeting a
+        // single PID skips global listeners and transient UI such as menu-bar
+        // popovers, which made Escape and other mappings depend on app focus.
+        event.post(tap: .cghidEventTap)
     }
 
 }

@@ -86,6 +86,10 @@ struct SettingsPanel: View {
                             .foregroundStyle(.secondary)
                     }
 
+                    section("App 情景方案", icon: "square.stack.3d.up.fill") {
+                        contextualProfilesSettings
+                    }
+
                     section("配置与诊断", icon: "wrench.and.screwdriver.fill") {
                         HStack(spacing: 10) {
                             actionButton("导出配置", icon: "square.and.arrow.up", action: model.exportMappings)
@@ -155,5 +159,114 @@ struct SettingsPanel: View {
                 .frame(maxWidth: .infinity, minHeight: 34)
         }
         .buttonStyle(.bordered)
+    }
+
+    @ViewBuilder
+    private var contextualProfilesSettings: some View {
+        if let configuration = model.mappingStore.selectedConfiguration {
+            Toggle(
+                isOn: Binding(
+                    get: { model.mappingStore.contextualProfilesEnabled },
+                    set: { model.mappingStore.contextualProfilesEnabled = $0 }
+                )
+            ) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("跟随前台 App 自动切换")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("当前设备：\(configuration.deviceName)")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+
+            Divider()
+
+            ForEach(model.mappingStore.profiles) { profile in
+                profileManagementRow(profile, fallbackID: configuration.activeProfileID)
+                if profile.id != model.mappingStore.profiles.last?.id {
+                    Divider()
+                }
+            }
+
+            Button {
+                model.mappingStore.addProfile(forCurrentApplication: false)
+            } label: {
+                Label("复制当前方案，新增通用方案", systemImage: "plus.square.on.square")
+            }
+            .buttonStyle(.bordered)
+        } else {
+            ContentUnavailableView(
+                "尚未选择设备",
+                systemImage: "cable.connector",
+                description: Text("连接手柄、外接键盘或鼠标后，可以在这里管理情景方案。")
+            )
+            .frame(maxWidth: .infinity, minHeight: 110)
+        }
+    }
+
+    private func profileManagementRow(_ profile: MappingProfile, fallbackID: UUID) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                TextField(
+                    "方案名称",
+                    text: Binding(
+                        get: { model.mappingStore.profiles.first(where: { $0.id == profile.id })?.name ?? profile.name },
+                        set: { model.mappingStore.renameProfile(profile.id, to: $0) }
+                    )
+                )
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, weight: .semibold))
+
+                if let identifiers = profile.applicationBundleIdentifiers, !identifiers.isEmpty {
+                    Text("绑定：\(identifiers.joined(separator: "、"))")
+                        .font(.system(size: 8, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                } else {
+                    Text(profile.id == fallbackID ? "当前通用回退方案" : "尚未绑定 App")
+                        .font(.system(size: 8))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            if profile.id != fallbackID, profile.applicationBundleIdentifiers?.isEmpty != false {
+                Button("设为通用") {
+                    model.mappingStore.setActiveProfile(profile.id)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            } else if profile.id == fallbackID {
+                Label("通用", systemImage: "checkmark.circle.fill")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.green)
+            } else {
+                Label("专属", systemImage: "app.badge.checkmark")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.blue)
+            }
+
+            if profile.applicationBundleIdentifiers?.isEmpty == false {
+                Button {
+                    model.mappingStore.clearApplicationBindings(for: profile.id)
+                } label: {
+                    Image(systemName: "link.badge.minus")
+                }
+                .buttonStyle(.borderless)
+                .help("清除这个方案的全部 App 绑定")
+            }
+
+            Button(role: .destructive) {
+                model.mappingStore.deleteProfile(profile.id)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+            .disabled(model.mappingStore.profiles.count <= 1)
+            .help("删除方案")
+        }
+        .padding(.vertical, 3)
     }
 }

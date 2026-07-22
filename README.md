@@ -2,13 +2,19 @@
 
 把游戏手柄变成通用的 macOS 动作控制台：每个按钮和摇杆方向都可以映射成键盘操作、组合键、页面滚动、App 切换或终端命令。
 
-项目现状、已完成/未完成范围、数据迁移、风险和接手步骤见 [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md)。
+项目现状、已完成/未完成范围、数据迁移、风险和接手步骤见 [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md)。本机真实外设、权限和重启回归结果见 [`docs/REAL_DEVICE_PERMISSION_REGRESSION.md`](docs/REAL_DEVICE_PERMISSION_REGRESSION.md)。
 
-## v0.1.1（公开测试版）
+## v0.4.0（公开测试版）
 
 - 同时发现多个 macOS GameController 手柄，并在设备菜单中切换
 - 发现外接 HID 键盘/三键、五键小键盘；首次实际按下时学习为 K1–K12，按设备保存
 - 每个设备拥有完全独立的映射，主界面每台设备只呈现一套当前配置
+- 支持按前台 App 自动切换情景方案，同一套逻辑适用于手柄、外接 HID 键盘和鼠标按键
+- 主界面的 `APP ROUTE` 情景条可绑定已有方案、复制当前方案为 App 专属方案，或恢复通用方案
+- 设置页可集中重命名、删除、选择通用方案，以及查看或清除 App 绑定
+- 通用方案始终作为整台电脑的回退；每套专属方案只绑定一个 App，不会因为手动选择而污染微信等其他应用
+- ChatGPT / Codex 专属方案会出现“当前 App”动作：新建任务、模型与推理选择器、听写、语音模式和推理强度控制
+- Voke 只保存 Codex 动作 ID；自动读取当前用户的 `CODEX_HOME/keybindings.json`（默认 `~/.codex/keybindings.json`）并监听修改，不需要重复录入快捷键
 - 实时显示 A/B/X/Y、肩键、扳机、十字键和双摇杆
 - 大面积可点击手柄映射面，控制点与真实按键实时联动，用连线和胶囊标签展示当前动作
 - Mapping Studio 支持为 A/B/X/Y、肩键、扳机、摇杆按下、摇杆八个方向、十字键、HOME 与 Capture 独立配置动作
@@ -58,7 +64,7 @@ xcodebuild -project Voke.xcodeproj -scheme Voke -configuration Debug build
 ./scripts/build-test-dmg.sh
 ```
 
-产物文件名会自动包含应用版本，例如 `dist/Voke-v0.1.1.dmg` 和 `dist/Voke-v0.1.1.dmg.sha256`。该包包含 Apple Silicon 与 Intel 架构，但仍使用本地自签名；测试者首次打开时需要在“系统设置 → 隐私与安全性”中明确选择仍要打开。
+产物文件名会自动包含应用版本，例如 `dist/Voke-v0.4.0.dmg` 和 `dist/Voke-v0.4.0.dmg.sha256`。该包包含 Apple Silicon 与 Intel 架构，但仍使用本地自签名；测试者首次打开时需要在“系统设置 → 隐私与安全性”中明确选择仍要打开。
 
 ## 外部测试与日志
 
@@ -81,6 +87,14 @@ xcodebuild test -project Voke.xcodeproj -scheme Voke -destination 'platform=macO
 
 外接小键盘还需要“系统设置 → 隐私与安全性 → 输入监控”权限。当前使用监听模式：映射动作会执行，但小键盘本来的按键仍会同时传给前台应用，不会被拦截或吞掉。
 
+## 按 App 自动切换
+
+先在设备菜单选择手柄、外接键盘或鼠标，再把目标 App 切到前台。回到 Voke 后，`APP ROUTE` 会继续显示最近使用的外部 App；可以直接选择一个已有方案，或复制当前方案作为该 App 的专属方案。以后切换到这个 App 时，Voke 会自动采用对应方案；没有专属方案的 App 继续使用当前通用方案。
+
+这个能力按 macOS Bundle ID 识别应用，是一套通用路由，不依赖 ChatGPT、Codex、闪电说等特定产品。外接键盘和鼠标仍采用监听模式，因此原始按键或点击可能同时传给目标 App；鼠标移动和滚轮目前不能作为独立触发器。
+
+Voke 当前只把目标 App 已公开的快捷键命令当作可靠动作。本机 ChatGPT / Codex 已确认“新建任务”“模型与推理选择器”“听写”和“语音模式”的默认快捷键，可以直接选择。提高、降低和循环推理强度默认没有快捷键；只需在 Codex 的 Keyboard Shortcuts 中设置，Voke 会监听 `keybindings.json` 并自动刷新内存缓存。相关证据与边界见 [`docs/CODEX_CONTROL_RESEARCH.md`](docs/CODEX_CONTROL_RESEARCH.md)。
+
 当前主界面使用功能性的俯视手柄映射图，目标是快速选择按键并读取映射，不再尝试表现工业 CAD 或实物扫描效果。
 
 ## 安全设计
@@ -89,4 +103,4 @@ xcodebuild test -project Voke.xcodeproj -scheme Voke -destination 'platform=macO
 
 键盘快捷键需要 macOS 辅助功能权限；终端命令不依赖该权限。终端动作拥有当前用户权限，请只配置你理解并信任的命令。单独的 Command、Shift、Option、Control 使用 macOS `flagsChanged` 事件，左右修饰键可以分别录制。
 
-普通按键和组合键会直接投递给当前前台应用；单独的修饰键使用系统级投递。“点按一次”会保持 60ms 的按下时间，兼容 Electron 和 Web 输入框。
+普通按键、组合键和单独修饰键都使用系统级事件投递。“点按一次”会保持 60ms 的按下时间，兼容 Electron 和 Web 输入框。

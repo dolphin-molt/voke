@@ -32,12 +32,14 @@ final class AppModel: ObservableObject {
     @Published var events: [ControlEvent] = []
     @Published var audioDevices: [AudioDeviceInfo] = []
     @Published var activeApplication = "桌面"
+    @Published private(set) var activeApplicationBundleIdentifier: String?
     @Published var selectedControl: ControllerControl = .rightTrigger
     @Published private(set) var devices: [InputDeviceDescriptor] = []
     @Published private(set) var selectedDeviceID: String?
 
     let keyboard = KeyboardOutputService()
     let mappingStore = MappingStore()
+    let applicationShortcuts = ApplicationShortcutSyncService()
     private let audio = AudioDeviceService()
     private let shell = ShellCommandService()
     private let scroll = ScrollOutputService()
@@ -49,10 +51,14 @@ final class AppModel: ObservableObject {
     private var controllerDeviceIDs: [ObjectIdentifier: String] = [:]
     private var pressedByDevice: [String: Set<String>] = [:]
     private var observers: [NSObjectProtocol] = []
+    private var workspaceObservers: [NSObjectProtocol] = []
     private var audioTimer: Timer?
     private var appTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
     private var started = false
+    private let deviceDisplayOrderKey = "deviceDisplayOrder.v1"
+    private var deviceDisplayOrder = UserDefaults.standard.stringArray(forKey: "deviceDisplayOrder.v1") ?? []
+    private var usesCustomDeviceDisplayOrder = UserDefaults.standard.object(forKey: "deviceDisplayOrder.v1") != nil
 
     var inputDevices: [AudioDeviceInfo] { audioDevices.filter(\.hasInput) }
     var outputDevices: [AudioDeviceInfo] { audioDevices.filter(\.hasOutput) }
@@ -85,7 +91,9 @@ final class AppModel: ObservableObject {
         GCController.shouldMonitorBackgroundEvents = true
         refreshAudio()
         refreshActiveApplication()
+        applicationShortcuts.start()
         observeControllers()
+        observeApplications()
         hid.start()
 
         audioTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
@@ -115,8 +123,11 @@ final class AppModel: ObservableObject {
         appTimer?.invalidate()
         observers.forEach(NotificationCenter.default.removeObserver)
         observers.removeAll()
+        workspaceObservers.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
+        workspaceObservers.removeAll()
         GCController.stopWirelessControllerDiscovery()
         hid.stop()
+        applicationShortcuts.stop()
         started = false
     }
 
@@ -159,6 +170,27 @@ final class AppModel: ObservableObject {
         addEvent("正在配置 \(device.name)")
     }
 
+    func moveDevice(_ sourceID: String, relativeTo targetID: String) {
+        guard sourceID != targetID,
+              devices.contains(where: { $0.id == sourceID }),
+              devices.contains(where: { $0.id == targetID })
+        else { return }
+
+        if !usesCustomDeviceDisplayOrder {
+            deviceDisplayOrder = devices.map(\.id)
+            usesCustomDeviceDisplayOrder = true
+        } else {
+            appendMissingDeviceIDsToDisplayOrder()
+        }
+
+        let updated = DeviceDisplayOrder.moving(deviceDisplayOrder, sourceID: sourceID, targetID: targetID)
+        guard updated != deviceDisplayOrder else { return }
+        deviceDisplayOrder = updated
+        UserDefaults.standard.set(deviceDisplayOrder, forKey: deviceDisplayOrderKey)
+        devices = DeviceDisplayOrder.sorted(devices, using: deviceDisplayOrder)
+        addEvent("已调整设备显示顺序")
+    }
+
     func controlLabel(_ control: ControllerControl) -> String {
         selectedDevice?.controlLabels[control] ?? control.compactLabel
     }
@@ -176,6 +208,20 @@ final class AppModel: ObservableObject {
         observers.append(center.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.releaseAllOutputs() }
         })
+    }
+
+    private func observeApplications() {
+        let center = NSWorkspace.shared.notificationCenter
+        workspaceObservers.append(
+            center.addObserver(
+                forName: NSWorkspace.didActivateApplicationNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] note in
+                guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+                Task { @MainActor in self?.updateActiveApplication(app) }
+            }
+        )
     }
 
     private func attachFirstController() {
@@ -415,6 +461,39 @@ final class AppModel: ObservableObject {
         switch mapping.actionKind {
         case .none:
             return
+        case .applicationAction:
+            guard let preset = ApplicationActionRegistry.preset(id: mapping.applicationActionID) else {
+                if pressed { addEvent("\(control.rawValue) 尚未选择 App 动作") }
+                return
+            }
+            if preset.interaction == .pressAndHold, !pressed {
+                keyboard.release(id: outputID)
+                addEvent("\(control.rawValue) → 结束\(preset.title)")
+                return
+            }
+            guard pressed else { return }
+            guard preset.supports(activeApplicationBundleIdentifier) else {
+                addEvent("\(control.rawValue) 被阻止 · \(preset.title) 不适用于 \(activeApplication)")
+                return
+            }
+            let resolution = applicationShortcuts.resolution(for: preset)
+            guard let shortcut = resolution.shortcut else {
+                let reason = resolution.source == .disabled ? "已在 Codex 中禁用" : "尚未在 Codex 中设置快捷键"
+                addEvent("\(control.rawValue) → \(preset.title) \(reason)")
+                return
+            }
+            guard keyboard.isAccessibilityTrusted else {
+                addEvent("\(control.rawValue) App 动作被阻止 · 需要辅助功能权限")
+                keyboard.requestAccessibilityPermission()
+                return
+            }
+            performApplicationAction(
+                preset,
+                shortcut: shortcut,
+                control: control,
+                deviceID: deviceID,
+                outputID: outputID
+            )
         case .shortcut:
             guard let shortcut = mapping.shortcut else {
                 if pressed { addEvent("\(control.rawValue) 尚未录制快捷键") }
@@ -584,11 +663,27 @@ final class AppModel: ObservableObject {
             devices[index] = device
         } else {
             devices.append(device)
-            devices.sort {
-                if $0.connected != $1.connected { return $0.connected && !$1.connected }
-                return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-            }
         }
+        applyDeviceDisplayOrder()
+    }
+
+    private func applyDeviceDisplayOrder() {
+        guard usesCustomDeviceDisplayOrder else {
+            devices = DeviceDisplayOrder.sorted(devices, using: [])
+            return
+        }
+        appendMissingDeviceIDsToDisplayOrder()
+        devices = DeviceDisplayOrder.sorted(devices, using: deviceDisplayOrder)
+    }
+
+    private func appendMissingDeviceIDsToDisplayOrder() {
+        let knownIDs = Set(deviceDisplayOrder)
+        let missingIDs = DeviceDisplayOrder.sorted(devices, using: [])
+            .map(\.id)
+            .filter { !knownIDs.contains($0) }
+        guard !missingIDs.isEmpty else { return }
+        deviceDisplayOrder.append(contentsOf: missingIDs)
+        UserDefaults.standard.set(deviceDisplayOrder, forKey: deviceDisplayOrderKey)
     }
 
     private func synchronizeSelectedDevice(preferredConnectedID: String?) {
@@ -610,7 +705,82 @@ final class AppModel: ObservableObject {
     }
 
     private func refreshActiveApplication() {
-        activeApplication = NSWorkspace.shared.frontmostApplication?.localizedName ?? "桌面"
+        guard let app = NSWorkspace.shared.frontmostApplication else { return }
+        updateActiveApplication(app)
+    }
+
+    private func performApplicationAction(
+        _ preset: ApplicationActionPreset,
+        shortcut: KeyboardShortcut,
+        control: ControllerControl,
+        deviceID: String,
+        outputID: String
+    ) {
+        let workspace = NSWorkspace.shared
+        let frontmost = workspace.frontmostApplication
+        if preset.supports(frontmost?.bundleIdentifier) {
+            emitApplicationAction(preset, shortcut: shortcut, outputID: outputID)
+            addEvent("\(control.rawValue) → \(preset.title) @ \(frontmost?.localizedName ?? activeApplication)")
+            return
+        }
+
+        // Voke keeps the last external app as the editing target. When the
+        // user tests a mapping while Voke itself is frontmost, return to that
+        // target before sending the app-scoped shortcut.
+        guard frontmost?.processIdentifier == ProcessInfo.processInfo.processIdentifier,
+              let target = workspace.runningApplications.first(where: { preset.supports($0.bundleIdentifier) }),
+              target.activate(options: [.activateAllWindows])
+        else {
+            addEvent("\(control.rawValue) 被阻止 · 请先切回 \(activeApplication)")
+            return
+        }
+
+        addEvent("\(control.rawValue) → 正在切回 \(target.localizedName ?? activeApplication)")
+        Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(140))
+            guard let self,
+                  preset.supports(NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
+            else {
+                self?.addEvent("\(control.rawValue) → \(preset.title) 未执行 · 目标 App 未置前")
+                return
+            }
+            if preset.interaction == .pressAndHold,
+               self.pressedByDevice[deviceID]?.contains(control.rawValue) != true {
+                self.addEvent("\(control.rawValue) → \(preset.title) 已取消")
+                return
+            }
+            self.emitApplicationAction(preset, shortcut: shortcut, outputID: outputID)
+            self.addEvent("\(control.rawValue) → \(preset.title) @ \(target.localizedName ?? self.activeApplication)")
+        }
+    }
+
+    private func emitApplicationAction(
+        _ preset: ApplicationActionPreset,
+        shortcut: KeyboardShortcut,
+        outputID: String
+    ) {
+        switch preset.interaction {
+        case .tap:
+            keyboard.tap(shortcut)
+        case .pressAndHold:
+            keyboard.press(shortcut, id: outputID, repeats: false)
+        }
+    }
+
+    private func updateActiveApplication(_ app: NSRunningApplication) {
+        // Keep the last external app as the editing target while the Voke
+        // window is open. Otherwise opening Voke would immediately replace a
+        // ChatGPT, browser, or editing-app context with "Voke".
+        guard app.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
+        let name = app.localizedName ?? "桌面"
+        let bundleIdentifier = app.bundleIdentifier
+        guard name != activeApplication || bundleIdentifier != activeApplicationBundleIdentifier else { return }
+        releaseAllOutputs()
+        activeApplication = name
+        activeApplicationBundleIdentifier = bundleIdentifier
+        mappingStore.updateApplicationContext(bundleIdentifier: bundleIdentifier, displayName: name)
+        applicationShortcuts.refresh()
+        addEvent("目标 App → \(name) · \(mappingStore.activeProfileName)")
     }
 
     private func refreshLaunchAtLoginStatus() {

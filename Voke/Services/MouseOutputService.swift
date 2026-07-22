@@ -20,6 +20,35 @@ struct MouseMotionPlanner {
     }
 }
 
+enum MouseClickEventFactory {
+    static func leftClick(at position: CGPoint) -> (down: CGEvent, up: CGEvent)? {
+        // A Control-modified left click is a secondary click on macOS. Use a
+        // private source and clear flags so a Voke "left click" stays a plain
+        // primary click even while another mapped modifier is being released.
+        guard let source = CGEventSource(stateID: .privateState),
+              let down = CGEvent(
+                mouseEventSource: source,
+                mouseType: .leftMouseDown,
+                mouseCursorPosition: position,
+                mouseButton: .left
+              ),
+              let up = CGEvent(
+                mouseEventSource: source,
+                mouseType: .leftMouseUp,
+                mouseCursorPosition: position,
+                mouseButton: .left
+              )
+        else { return nil }
+
+        for event in [down, up] {
+            event.flags = []
+            event.setIntegerValueField(.mouseEventButtonNumber, value: 0)
+            event.setIntegerValueField(.mouseEventClickState, value: 1)
+        }
+        return (down, up)
+    }
+}
+
 @MainActor
 final class MouseOutputService {
     private var delta = CGPoint.zero
@@ -41,22 +70,10 @@ final class MouseOutputService {
 
     func clickLeft() {
         guard let position = CGEvent(source: nil)?.location,
-              let source = CGEventSource(stateID: .combinedSessionState),
-              let down = CGEvent(
-                mouseEventSource: source,
-                mouseType: .leftMouseDown,
-                mouseCursorPosition: position,
-                mouseButton: .left
-              ),
-              let up = CGEvent(
-                mouseEventSource: source,
-                mouseType: .leftMouseUp,
-                mouseCursorPosition: position,
-                mouseButton: .left
-              )
+              let events = MouseClickEventFactory.leftClick(at: position)
         else { return }
-        down.post(tap: .cghidEventTap)
-        up.post(tap: .cghidEventTap)
+        events.down.post(tap: .cghidEventTap)
+        events.up.post(tap: .cghidEventTap)
     }
 
     func stopMoving() {

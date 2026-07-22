@@ -15,7 +15,7 @@ wrangler pages dev site \
 页面中的下载按钮固定指向带版本号的 GitHub Release 文件：
 
 ```text
-https://github.com/dolphin-molt/voke/releases/download/v0.1.1/Voke-v0.1.1.dmg
+https://github.com/dolphin-molt/voke/releases/download/v0.4.0/Voke-v0.4.0.dmg
 ```
 
 发布新版本时需要同时更新 Release 标签、DMG 文件名和页面下载链接，避免浏览器或 macOS 继续使用旧缓存。

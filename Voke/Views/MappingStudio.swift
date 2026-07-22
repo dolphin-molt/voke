@@ -55,6 +55,7 @@ final class ShortcutRecorder: ObservableObject {
 
 struct MappingStudio: View {
     @ObservedObject var store: MappingStore
+    @ObservedObject var applicationShortcuts: ApplicationShortcutSyncService
     @Binding var selectedControl: ControllerControl
     let accessibilityTrusted: Bool
     let openAccessibilitySettings: () -> Void
@@ -107,6 +108,8 @@ struct MappingStudio: View {
                         screenshotEditor
                     case .shell:
                         shellEditor
+                    case .applicationAction:
+                        applicationActionEditor
                     }
                 }
 
@@ -164,6 +167,29 @@ struct MappingStudio: View {
                 }
                 .frame(maxWidth: .infinity)
 
+                if !store.availableApplicationActions.isEmpty {
+                    Menu {
+                        ForEach(ApplicationActionGroup.allCases) { group in
+                            let actions = store.availableApplicationActions.filter { $0.group == group }
+                            if !actions.isEmpty {
+                                Section(group.title) {
+                                    ForEach(actions) { action in
+                                        let resolution = applicationShortcuts.resolution(for: action)
+                                        Button(actionMenuTitle(action, resolution: resolution)) {
+                                            selectApplicationAction(action)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        categoryLabel("当前 App", active: mapping.actionKind == .applicationAction)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .frame(maxWidth: .infinity)
+                }
+
                 Menu {
                     Button("切换中英文") { actionKindBinding.wrappedValue = .inputSource }
                     Button("页面滚动") { actionKindBinding.wrappedValue = .scroll }
@@ -201,6 +227,89 @@ struct MappingStudio: View {
     }
 
     private var isMoreAction: Bool { [.none, .shell].contains(mapping.actionKind) }
+
+    private func actionMenuTitle(
+        _ action: ApplicationActionPreset,
+        resolution: ApplicationShortcutResolution
+    ) -> String {
+        if let shortcut = resolution.shortcut {
+            return "\(action.title) · \(shortcut.displayName)"
+        }
+        return "\(action.title) · 需先在 Codex 设置"
+    }
+
+    private func selectApplicationAction(_ action: ApplicationActionPreset) {
+        store.update(selectedControl) { mapping in
+            mapping.actionKind = .applicationAction
+            mapping.applicationActionID = action.id
+            mapping.applicationActionShortcut = nil
+            mapping.triggerBehavior = action.interaction == .pressAndHold ? .hold : .tap
+        }
+    }
+
+    private var applicationActionEditor: some View {
+        let preset = ApplicationActionRegistry.preset(id: mapping.applicationActionID)
+        let resolution = preset.map(applicationShortcuts.resolution)
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: "app.badge.checkmark")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(accent)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(preset?.title ?? "选择当前 App 的动作")
+                        .font(.system(size: 12, weight: .bold))
+                    Text(preset?.detail ?? "从上方“当前 App”菜单选择")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if let preset {
+                    Text(preset.group == .codexGeneral ? "CODEX" : "MICRO")
+                        .font(.system(size: 8, weight: .black, design: .rounded))
+                        .padding(.horizontal, 8)
+                        .frame(height: 22)
+                        .background(accent.opacity(0.18))
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(14)
+            .background(field)
+            .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+
+            if let preset {
+                label("Codex 快捷键同步")
+                HStack {
+                    Image(systemName: resolution?.shortcut == nil ? "exclamationmark.triangle" : "arrow.triangle.2.circlepath")
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(resolution?.shortcut?.displayName ?? "Codex 中未设置")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                        Text(applicationShortcuts.statusText)
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("刷新") { applicationShortcuts.refresh() }
+                        .buttonStyle(.borderless)
+                        .font(.system(size: 9, weight: .bold))
+                }
+                .padding(.horizontal, 13)
+                .frame(minHeight: 50)
+                .background(theme.palette.surface.opacity(0.72))
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(border))
+
+                if resolution?.shortcut == nil {
+                    HStack {
+                        Image(systemName: "keyboard")
+                        Text("请在 Codex → Settings → Keyboard shortcuts 为“\(preset.title)”设置快捷键。Voke 会自动读取，不需要再次录入。")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
 
     private func actionCategoryButton(_ title: String, active: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) { categoryLabel(title, active: active) }

@@ -4,6 +4,8 @@ import SwiftUI
 struct DashboardView: View {
     @EnvironmentObject private var model: AppModel
     @State private var showsSettings = false
+    @State private var draggedDeviceID: String?
+    @State private var deviceDropTargetID: String?
     @AppStorage("appearanceTheme") private var themeRawValue = AppTheme.daylight.rawValue
 
     private var theme: AppTheme { AppTheme(rawValue: themeRawValue) ?? .daylight }
@@ -15,6 +17,19 @@ struct DashboardView: View {
     private var warning: Color { theme.palette.warning }
     private var ink: Color { theme.palette.ink }
     private var liveGreen: Color { Color(red: 0.263, green: 0.557, blue: 0.365) }
+    private var runtimeState: MappingRuntimeState {
+        MappingRuntimeState.resolve(
+            mappingEnabled: model.mappingEnabled,
+            selectedDevice: model.selectedDevice,
+            inputMonitoringGranted: model.inputMonitoringGranted,
+            accessibilityTrusted: model.keyboard.isAccessibilityTrusted
+        )
+    }
+    private var runtimeStatusColor: Color {
+        if runtimeState.isReady { return liveGreen }
+        if runtimeState.isPaused { return Color.secondary.opacity(0.45) }
+        return warning
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -28,6 +43,7 @@ struct DashboardView: View {
                 VStack(spacing: 12) {
                     header
                     deviceDock
+                    contextDock
 
                     Group {
                         if wide {
@@ -114,15 +130,15 @@ struct DashboardView: View {
 
             HStack(spacing: 10) {
                 Circle()
-                    .fill(model.mappingEnabled ? liveGreen : Color.secondary.opacity(0.45))
+                    .fill(runtimeStatusColor)
                     .frame(width: 8, height: 8)
-                    .shadow(color: liveGreen.opacity(0.18), radius: 0, x: 0, y: 0)
-                Text(model.mappingEnabled ? "映射运行中" : "映射已暂停")
+                    .shadow(color: runtimeStatusColor.opacity(0.18), radius: 0, x: 0, y: 0)
+                Text(runtimeState.label)
                     .font(.system(size: 10, weight: .bold))
             }
             .padding(.horizontal, 14)
             .frame(height: 36)
-            .foregroundStyle(model.mappingEnabled ? Color(red: 0.286, green: 0.376, blue: 0.310) : .secondary)
+            .foregroundStyle(runtimeState.isReady ? Color(red: 0.286, green: 0.376, blue: 0.310) : runtimeState.isPaused ? Color.secondary : warning)
             .background(surface.opacity(0.62))
             .clipShape(Capsule())
             .overlay(Capsule().stroke(border))
@@ -160,6 +176,9 @@ struct DashboardView: View {
                             let selected = device.id == model.selectedDeviceID
                             Button { model.selectDevice(device.id) } label: {
                                 HStack(spacing: 8) {
+                                    Image(systemName: "line.3.horizontal")
+                                        .font(.system(size: 8, weight: .black))
+                                        .foregroundStyle(selected ? ink.opacity(0.52) : Color.secondary.opacity(0.55))
                                     Image(systemName: device.kind.icon)
                                     Text(device.kind == .gameController ? device.name : "\(device.name) · \(device.kind.title)")
                                         .lineLimit(1)
@@ -177,6 +196,36 @@ struct DashboardView: View {
                                 .shadow(color: selected ? ink.opacity(0.12) : .clear, radius: 0, x: 3, y: 4)
                             }
                             .buttonStyle(.plain)
+                            .opacity(draggedDeviceID == device.id ? 0.48 : 1)
+                            .scaleEffect(deviceDropTargetID == device.id ? 1.045 : 1)
+                            .animation(.easeOut(duration: 0.12), value: deviceDropTargetID)
+                            .draggable(device.id) {
+                                Label(device.name, systemImage: device.kind.icon)
+                                    .font(.system(size: 10, weight: .bold))
+                                    .padding(.horizontal, 14)
+                                    .frame(height: 34)
+                                    .background(accent)
+                                    .clipShape(Capsule())
+                                    .overlay(Capsule().stroke(ink, lineWidth: 1.2))
+                                    .onAppear { draggedDeviceID = device.id }
+                                    .onDisappear {
+                                        if draggedDeviceID == device.id { draggedDeviceID = nil }
+                                    }
+                            }
+                            .dropDestination(for: String.self) { sourceIDs, _ in
+                                guard let sourceID = sourceIDs.first else { return false }
+                                model.moveDevice(sourceID, relativeTo: device.id)
+                                draggedDeviceID = nil
+                                deviceDropTargetID = nil
+                                return true
+                            } isTargeted: { targeted in
+                                if targeted {
+                                    deviceDropTargetID = device.id
+                                } else if deviceDropTargetID == device.id {
+                                    deviceDropTargetID = nil
+                                }
+                            }
+                            .help("点击切换设备；按住拖动可调整顺序")
                         }
                     }
                 }
@@ -185,6 +234,129 @@ struct DashboardView: View {
         }
         .padding(.horizontal, 22)
         .frame(height: 42)
+    }
+
+    private var contextDock: some View {
+        HStack(spacing: 10) {
+            Text("APP ROUTE")
+                .font(.system(size: 8, weight: .black, design: .monospaced))
+                .tracking(1.25)
+                .foregroundStyle(ink.opacity(0.46))
+
+            HStack(spacing: 8) {
+                targetApplicationIcon
+                    .frame(width: 21, height: 21)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(model.activeApplication)
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .lineLimit(1)
+                    Text("当前目标 App")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 11)
+            .frame(height: 38)
+            .background(surface.opacity(0.74))
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(border))
+
+            Image(systemName: "arrow.right")
+                .font(.system(size: 10, weight: .black))
+                .foregroundStyle(model.mappingStore.currentApplicationUsesDedicatedProfile ? liveGreen : ink.opacity(0.35))
+
+            Menu {
+                if model.mappingStore.profiles.isEmpty {
+                    Text("连接设备后可创建方案")
+                } else {
+                    Section("当前路由") {
+                        Label(
+                            model.mappingStore.currentApplicationUsesDedicatedProfile
+                                ? "\(model.activeApplication) → \(model.mappingStore.activeProfileName)"
+                                : "其他 App → \(model.mappingStore.fallbackProfileName)",
+                            systemImage: model.mappingStore.currentApplicationUsesDedicatedProfile
+                                ? "app.badge.checkmark"
+                                : "macwindow"
+                        )
+                    }
+                    Divider()
+                    if model.mappingStore.currentApplicationUsesDedicatedProfile {
+                        Button {
+                            model.mappingStore.stopUsingDedicatedProfileForCurrentApplication()
+                        } label: {
+                            Label("恢复通用方案", systemImage: "arrow.uturn.backward")
+                        }
+                    } else if model.mappingStore.applicationContext.isBindable {
+                        Button {
+                            model.mappingStore.addProfile()
+                        } label: {
+                            Label("为 \(model.activeApplication) 新建专属方案", systemImage: "plus.square.on.square")
+                        }
+                    } else {
+                        Text("先切换到目标 App，再创建专属方案")
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: model.mappingStore.currentApplicationUsesDedicatedProfile ? "app.badge.checkmark" : "square.stack.3d.up.fill")
+                        .foregroundStyle(model.mappingStore.currentApplicationUsesDedicatedProfile ? liveGreen : ink.opacity(0.62))
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(model.mappingStore.activeProfileName)
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .lineLimit(1)
+                        Text(model.mappingStore.currentApplicationUsesDedicatedProfile ? "App 专属方案" : "通用方案")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundStyle(.secondary)
+                    }
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .frame(height: 38)
+                .background(model.mappingStore.currentApplicationUsesDedicatedProfile ? accent.opacity(0.28) : elevated)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(model.mappingStore.currentApplicationUsesDedicatedProfile ? liveGreen.opacity(0.55) : border))
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .disabled(model.selectedDeviceID == nil)
+
+            Spacer(minLength: 6)
+
+            Toggle(
+                isOn: Binding(
+                    get: { model.mappingStore.contextualProfilesEnabled },
+                    set: { model.mappingStore.contextualProfilesEnabled = $0 }
+                )
+            ) {
+                Text("跟随 App")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+            }
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+            .help("切换前台应用时，自动使用绑定给该 App 的方案")
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 48)
+        .background(surface.opacity(0.46))
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(border.opacity(0.82), style: StrokeStyle(lineWidth: 1, dash: [7, 4])))
+        .padding(.horizontal, 22)
+    }
+
+    @ViewBuilder
+    private var targetApplicationIcon: some View {
+        if let bundleIdentifier = model.activeApplicationBundleIdentifier,
+           let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) {
+            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                .resizable()
+                .scaledToFit()
+        } else {
+            Image(systemName: "macwindow")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(ink.opacity(0.62))
+        }
     }
 
     private var deviceSurface: some View {
@@ -311,6 +483,7 @@ struct DashboardView: View {
             } else {
                 MappingStudio(
                     store: model.mappingStore,
+                    applicationShortcuts: model.applicationShortcuts,
                     selectedControl: $model.selectedControl,
                     accessibilityTrusted: model.keyboard.isAccessibilityTrusted,
                     openAccessibilitySettings: model.openAccessibilitySettings,

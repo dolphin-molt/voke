@@ -26,6 +26,7 @@ enum MappingBackupError: LocalizedError {
     case unsupportedVersion(Int)
     case duplicateControl(String)
     case duplicateDevice(String)
+    case duplicateApplicationBinding(String)
     case emptyBackup
 
     var errorDescription: String? {
@@ -33,6 +34,7 @@ enum MappingBackupError: LocalizedError {
         case let .unsupportedVersion(version): "不支持的配置版本：\(version)"
         case let .duplicateControl(control): "配置中存在重复按键：\(control)"
         case let .duplicateDevice(device): "配置中存在重复设备：\(device)"
+        case let .duplicateApplicationBinding(bundleIdentifier): "同一设备中有多个方案绑定了 App：\(bundleIdentifier)"
         case .emptyBackup: "配置文件中没有可导入的设备"
         }
     }
@@ -42,16 +44,24 @@ enum MappingBackupError: LocalizedError {
 final class MappingStore: ObservableObject {
     @Published private(set) var configurations: [String: DeviceMappingConfiguration] = [:]
     @Published private(set) var selectedDeviceID: String?
+    @Published private(set) var applicationContext: ApplicationContext = .desktop
+    @Published var contextualProfilesEnabled: Bool {
+        didSet {
+            defaults.set(contextualProfilesEnabled, forKey: contextualProfilesEnabledKey)
+        }
+    }
 
     private let legacyDefaultsKey = "controllerMappings.v1"
     private let configurationsKey = "deviceConfigurations.v2"
     private let selectedDeviceKey = "selectedInputDevice.v2"
     private let mouseControlsMigrationKey = "mouseControlsMigration.v1"
+    private let contextualProfilesEnabledKey = "contextualProfilesEnabled.v1"
     private let defaults: UserDefaults
     private var pendingLegacyMappings: [ButtonMapping]?
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        contextualProfilesEnabled = defaults.object(forKey: contextualProfilesEnabledKey) as? Bool ?? true
         load()
     }
 
@@ -66,8 +76,35 @@ final class MappingStore: ObservableObject {
     }
 
     var profiles: [MappingProfile] { selectedConfiguration?.profiles ?? [] }
-    var activeProfileID: UUID? { selectedConfiguration?.activeProfileID }
+    var activeProfileID: UUID? {
+        guard let configuration = selectedConfiguration else { return nil }
+        return resolvedProfile(in: configuration)?.id
+    }
     var activeProfileName: String { activeProfile?.name ?? "默认方案" }
+    var currentApplicationUsesDedicatedProfile: Bool {
+        guard contextualProfilesEnabled,
+              let bundleIdentifier = applicationContext.bundleIdentifier,
+              let configuration = selectedConfiguration
+        else { return false }
+        return configuration.profiles.contains { $0.isBound(to: bundleIdentifier) }
+    }
+
+    var fallbackProfileID: UUID? { selectedConfiguration?.activeProfileID }
+    var fallbackProfileName: String {
+        guard let configuration = selectedConfiguration else { return "默认方案" }
+        return activeProfile(in: configuration)?.name ?? "默认方案"
+    }
+
+    var availableApplicationActions: [ApplicationActionPreset] {
+        guard currentApplicationUsesDedicatedProfile else { return [] }
+        return ApplicationActionRegistry.actions(for: applicationContext.bundleIdentifier)
+    }
+
+    func updateApplicationContext(bundleIdentifier: String?, displayName: String) {
+        let context = ApplicationContext(bundleIdentifier: bundleIdentifier, displayName: displayName)
+        guard context != applicationContext else { return }
+        applicationContext = context
+    }
 
     func registerDevice(_ device: InputDeviceDescriptor) {
         if var existing = configurations[device.id] {
@@ -123,7 +160,7 @@ final class MappingStore: ObservableObject {
 
     func update(_ mapping: ButtonMapping, deviceID: String) {
         guard var configuration = configurations[deviceID],
-              let index = configuration.profiles.firstIndex(where: { $0.id == configuration.activeProfileID })
+              let index = resolvedProfileIndex(in: configuration)
         else { return }
         var dictionary = Dictionary(uniqueKeysWithValues: configuration.profiles[index].mappings.map { ($0.control, $0) })
         dictionary[mapping.control] = mapping
@@ -141,7 +178,7 @@ final class MappingStore: ObservableObject {
     func resetToDefaults() {
         guard let selectedDeviceID,
               var configuration = configurations[selectedDeviceID],
-              let index = configuration.profiles.firstIndex(where: { $0.id == configuration.activeProfileID })
+              let index = resolvedProfileIndex(in: configuration)
         else { return }
         if configuration.deviceKind == .gameController {
             configuration.profiles[index].mappings = ControllerControl.allCases.compactMap {
@@ -156,51 +193,125 @@ final class MappingStore: ObservableObject {
         save()
     }
 
-    func addProfile() {
+    func addProfile(forCurrentApplication: Bool = true) {
         guard let selectedDeviceID,
               var configuration = configurations[selectedDeviceID],
-              let current = activeProfile(in: configuration)
+              let current = resolvedProfile(in: configuration)
         else { return }
+        let shouldBindApplication = forCurrentApplication && contextualProfilesEnabled && applicationContext.isBindable
+        let baseName = shouldBindApplication ? applicationContext.displayName : "方案"
+        let existingNames = Set(configuration.profiles.map(\.name))
+        var candidate = "\(baseName) 方案"
+        var suffix = 2
+        while existingNames.contains(candidate) {
+            candidate = "\(baseName) 方案 \(suffix)"
+            suffix += 1
+        }
         let profile = MappingProfile(
             id: UUID(),
-            name: "方案 \(configuration.profiles.count + 1)",
-            mappings: current.mappings
+            name: candidate,
+            mappings: current.mappings,
+            applicationBundleIdentifiers: shouldBindApplication ? applicationContext.bundleIdentifier.map { [$0] } : nil
         )
+        if let bundleIdentifier = applicationContext.bundleIdentifier, shouldBindApplication {
+            removeBinding(bundleIdentifier, from: &configuration)
+        }
         configuration.profiles.append(profile)
-        configuration.activeProfileID = profile.id
+        if !shouldBindApplication {
+            configuration.activeProfileID = profile.id
+        }
         configurations[selectedDeviceID] = configuration
         save()
     }
 
     func deleteActiveProfile() {
-        guard let selectedDeviceID,
-              var configuration = configurations[selectedDeviceID],
-              configuration.profiles.count > 1
+        guard let configuration = selectedConfiguration,
+              let profileID = resolvedProfile(in: configuration)?.id
         else { return }
-        configuration.profiles.removeAll { $0.id == configuration.activeProfileID }
-        configuration.activeProfileID = configuration.profiles[0].id
-        configurations[selectedDeviceID] = configuration
-        save()
+        deleteProfile(profileID)
     }
 
     func setActiveProfile(_ profileID: UUID) {
         guard let selectedDeviceID,
               var configuration = configurations[selectedDeviceID],
-              configuration.profiles.contains(where: { $0.id == profileID })
+              let profile = configuration.profiles.first(where: { $0.id == profileID }),
+              profile.applicationBundleIdentifiers?.isEmpty != false
         else { return }
         configuration.activeProfileID = profileID
         configurations[selectedDeviceID] = configuration
         save()
     }
 
+    func useProfileForCurrentApplication(_ profileID: UUID) {
+        guard contextualProfilesEnabled,
+              let bundleIdentifier = applicationContext.bundleIdentifier,
+              let selectedDeviceID,
+              var configuration = configurations[selectedDeviceID],
+              profileID != configuration.activeProfileID,
+              let index = configuration.profiles.firstIndex(where: { $0.id == profileID }),
+              configuration.profiles[index].applicationBundleIdentifiers?.first == nil
+                || configuration.profiles[index].isBound(to: bundleIdentifier)
+        else {
+            setActiveProfile(profileID)
+            return
+        }
+        removeBinding(bundleIdentifier, from: &configuration)
+        configuration.profiles[index].applicationBundleIdentifiers = [bundleIdentifier]
+        configurations[selectedDeviceID] = configuration
+        save()
+    }
+
+    func stopUsingDedicatedProfileForCurrentApplication() {
+        guard let bundleIdentifier = applicationContext.bundleIdentifier,
+              let selectedDeviceID,
+              var configuration = configurations[selectedDeviceID]
+        else { return }
+        removeBinding(bundleIdentifier, from: &configuration)
+        configurations[selectedDeviceID] = configuration
+        save()
+    }
+
+    func isProfileUsedByCurrentApplication(_ profileID: UUID) -> Bool {
+        guard let bundleIdentifier = applicationContext.bundleIdentifier,
+              let profile = profiles.first(where: { $0.id == profileID })
+        else { return false }
+        return profile.isBound(to: bundleIdentifier)
+    }
+
     func renameActiveProfile(_ name: String) {
+        guard let profileID = activeProfileID else { return }
+        renameProfile(profileID, to: name)
+    }
+
+    func renameProfile(_ profileID: UUID, to name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty,
               let selectedDeviceID,
               var configuration = configurations[selectedDeviceID],
-              let index = configuration.profiles.firstIndex(where: { $0.id == configuration.activeProfileID })
+              let index = configuration.profiles.firstIndex(where: { $0.id == profileID })
         else { return }
         configuration.profiles[index].name = trimmed
+        configurations[selectedDeviceID] = configuration
+        save()
+    }
+
+    func deleteProfile(_ profileID: UUID) {
+        guard let selectedDeviceID,
+              var configuration = configurations[selectedDeviceID],
+              configuration.profiles.count > 1,
+              configuration.profiles.contains(where: { $0.id == profileID })
+        else { return }
+        configuration.profiles.removeAll { $0.id == profileID }
+        configurations[selectedDeviceID] = normalized(configuration)
+        save()
+    }
+
+    func clearApplicationBindings(for profileID: UUID) {
+        guard let selectedDeviceID,
+              var configuration = configurations[selectedDeviceID],
+              let index = configuration.profiles.firstIndex(where: { $0.id == profileID })
+        else { return }
+        configuration.profiles[index].applicationBundleIdentifiers = nil
         configurations[selectedDeviceID] = configuration
         save()
     }
@@ -241,10 +352,15 @@ final class MappingStore: ObservableObject {
                 guard imported[device.deviceID] == nil else {
                     throw MappingBackupError.duplicateDevice(device.deviceID)
                 }
+                var claimedApplications = Set<String>()
                 for profile in device.profiles {
                     var controls = Set<ControllerControl>()
                     for mapping in profile.mappings where !controls.insert(mapping.control).inserted {
                         throw MappingBackupError.duplicateControl("\(device.deviceName) / \(mapping.control.rawValue)")
+                    }
+                    for bundleIdentifier in Set(profile.applicationBundleIdentifiers ?? [])
+                    where !claimedApplications.insert(bundleIdentifier).inserted {
+                        throw MappingBackupError.duplicateApplicationBinding(bundleIdentifier)
                     }
                 }
                 imported[device.deviceID] = normalized(device)
@@ -259,16 +375,37 @@ final class MappingStore: ObservableObject {
 
     private var activeProfile: MappingProfile? {
         guard let configuration = selectedConfiguration else { return nil }
-        return activeProfile(in: configuration)
+        return resolvedProfile(in: configuration)
     }
 
     private func activeProfile(in configuration: DeviceMappingConfiguration) -> MappingProfile? {
         configuration.profiles.first { $0.id == configuration.activeProfileID }
     }
 
+    private func resolvedProfile(in configuration: DeviceMappingConfiguration) -> MappingProfile? {
+        if contextualProfilesEnabled,
+           let bundleIdentifier = applicationContext.bundleIdentifier,
+           let contextual = configuration.profiles.first(where: { $0.isBound(to: bundleIdentifier) }) {
+            return contextual
+        }
+        return activeProfile(in: configuration)
+    }
+
+    private func resolvedProfileIndex(in configuration: DeviceMappingConfiguration) -> Int? {
+        guard let profileID = resolvedProfile(in: configuration)?.id else { return nil }
+        return configuration.profiles.firstIndex { $0.id == profileID }
+    }
+
+    private func removeBinding(_ bundleIdentifier: String, from configuration: inout DeviceMappingConfiguration) {
+        for index in configuration.profiles.indices {
+            let filtered = configuration.profiles[index].applicationBundleIdentifiers?.filter { $0 != bundleIdentifier } ?? []
+            configuration.profiles[index].applicationBundleIdentifiers = filtered.isEmpty ? nil : filtered
+        }
+    }
+
     private func mappingDictionary(deviceID: String) -> [ControllerControl: ButtonMapping] {
         guard let configuration = configurations[deviceID],
-              let profile = activeProfile(in: configuration)
+              let profile = resolvedProfile(in: configuration)
         else { return [:] }
         return Dictionary(uniqueKeysWithValues: profile.mappings.map { ($0.control, $0) })
     }
@@ -314,13 +451,46 @@ final class MappingStore: ObservableObject {
             result.profiles = [profile]
             result.activeProfileID = profile.id
         }
+        var claimedApplications = Set<String>()
         for index in result.profiles.indices {
             result.profiles[index].mappings = normalizedMappings(result.profiles[index].mappings, kind: result.deviceKind)
+            let identifiers = result.profiles[index].applicationBundleIdentifiers ?? []
+            let normalizedIdentifiers = identifiers
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            if normalizedIdentifiers.isEmpty {
+                result.profiles[index].applicationBundleIdentifiers = nil
+            } else {
+                let preferred = preferredApplicationIdentifier(from: normalizedIdentifiers)
+                result.profiles[index].applicationBundleIdentifiers = claimedApplications.insert(preferred).inserted
+                    ? [preferred]
+                    : nil
+            }
         }
-        if !result.profiles.contains(where: { $0.id == result.activeProfileID }) {
-            result.activeProfileID = result.profiles[0].id
+        if !result.profiles.contains(where: { $0.id == result.activeProfileID && $0.applicationBundleIdentifiers?.isEmpty != false }) {
+            if let genericProfile = result.profiles.first(where: { $0.applicationBundleIdentifiers?.isEmpty != false }) {
+                result.activeProfileID = genericProfile.id
+            } else {
+                let source = result.profiles.first!
+                let genericProfile = MappingProfile(
+                    id: UUID(),
+                    name: "默认方案",
+                    mappings: source.mappings,
+                    applicationBundleIdentifiers: nil
+                )
+                result.profiles.insert(genericProfile, at: 0)
+                result.activeProfileID = genericProfile.id
+            }
         }
         return result
+    }
+
+    private func preferredApplicationIdentifier(from identifiers: [String]) -> String {
+        let unique = Array(Set(identifiers)).sorted()
+        if let chatGPT = unique.first(where: { ApplicationActionRegistry.chatGPTBundleIdentifiers.contains($0) }) {
+            return chatGPT
+        }
+        return unique[0]
     }
 
     private func normalizedMappings(_ mappings: [ButtonMapping], kind: InputDeviceKind) -> [ButtonMapping] {

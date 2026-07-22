@@ -148,6 +148,7 @@ enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
     case appSwitch
     case screenshot
     case shell
+    case applicationAction
 
     var id: String { rawValue }
 
@@ -162,6 +163,7 @@ enum MappingActionKind: String, Codable, CaseIterable, Identifiable {
         case .appSwitch: "切换 App"
         case .screenshot: "截取屏幕"
         case .shell: "终端命令"
+        case .applicationAction: "App 动作"
         }
     }
 }
@@ -297,6 +299,8 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
     var shellCommand: String
     var scrollDirection: ScrollDirection?
     var appSwitchDirection: AppSwitchDirection?
+    var applicationActionID: String? = nil
+    var applicationActionShortcut: KeyboardShortcut? = nil
 
     init(
         control: ControllerControl,
@@ -329,6 +333,8 @@ struct ButtonMapping: Codable, Identifiable, Equatable {
         case .appSwitch: (appSwitchDirection ?? .next).title
         case .screenshot: "保存当前屏幕"
         case .shell: shellCommand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "等待命令" : "$ \(shellCommand)"
+        case .applicationAction:
+            ApplicationActionRegistry.preset(id: applicationActionID)?.title ?? "选择 App 动作"
         }
     }
 
@@ -397,6 +403,20 @@ struct MappingProfile: Codable, Identifiable, Equatable {
     var id: UUID
     var name: String
     var mappings: [ButtonMapping]
+    var applicationBundleIdentifiers: [String]? = nil
+
+    func isBound(to bundleIdentifier: String) -> Bool {
+        applicationBundleIdentifiers?.contains(bundleIdentifier) == true
+    }
+}
+
+struct ApplicationContext: Equatable {
+    var bundleIdentifier: String?
+    var displayName: String
+
+    static let desktop = ApplicationContext(bundleIdentifier: nil, displayName: "桌面")
+
+    var isBindable: Bool { bundleIdentifier?.isEmpty == false }
 }
 
 struct DeviceMappingConfiguration: Codable, Identifiable, Equatable {

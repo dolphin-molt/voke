@@ -3,14 +3,12 @@ import Foundation
 struct PlannedKeyboardEvent: Equatable {
     let shortcut: KeyboardShortcut
     let keyDown: Bool
-    let targetPID: pid_t?
     let flags: UInt
 }
 
 struct KeyboardEventPlanner {
     private struct ActiveOutput {
         let shortcut: KeyboardShortcut
-        let targetPID: pid_t?
     }
 
     private var activeOutputs: [String: ActiveOutput] = [:]
@@ -21,37 +19,37 @@ struct KeyboardEventPlanner {
         activeOutputs[id] != nil
     }
 
-    func tap(_ shortcut: KeyboardShortcut, targetPID: pid_t?) -> [PlannedKeyboardEvent] {
+    func tap(_ shortcut: KeyboardShortcut) -> [PlannedKeyboardEvent] {
         [
-            makeEvent(shortcut, keyDown: true, targetPID: targetPID),
-            makeEvent(shortcut, keyDown: false, targetPID: targetPID)
+            makeEvent(shortcut, keyDown: true),
+            makeEvent(shortcut, keyDown: false)
         ]
     }
 
-    mutating func press(_ shortcut: KeyboardShortcut, id: String, targetPID: pid_t?) -> PlannedKeyboardEvent? {
+    mutating func press(_ shortcut: KeyboardShortcut, id: String) -> PlannedKeyboardEvent? {
         guard activeOutputs[id] == nil else { return nil }
-        let event = makeEvent(shortcut, keyDown: true, targetPID: targetPID)
-        activeOutputs[id] = ActiveOutput(shortcut: shortcut, targetPID: targetPID)
+        let event = makeEvent(shortcut, keyDown: true)
+        activeOutputs[id] = ActiveOutput(shortcut: shortcut)
         return event
     }
 
     mutating func release(id: String) -> PlannedKeyboardEvent? {
         guard let output = activeOutputs.removeValue(forKey: id) else { return nil }
-        return makeEvent(output.shortcut, keyDown: false, targetPID: output.targetPID)
+        return makeEvent(output.shortcut, keyDown: false)
     }
 
     func repeatPulse(id: String) -> [PlannedKeyboardEvent] {
         guard let output = activeOutputs[id] else { return [] }
         return [
-            makeEvent(output.shortcut, keyDown: false, targetPID: output.targetPID),
-            makeEvent(output.shortcut, keyDown: true, targetPID: output.targetPID)
+            makeEvent(output.shortcut, keyDown: false),
+            makeEvent(output.shortcut, keyDown: true)
         ]
     }
 
     mutating func releaseAll() -> [PlannedKeyboardEvent] {
         let outputs = activeOutputs.values
         activeOutputs.removeAll()
-        return outputs.map { makeEvent($0.shortcut, keyDown: false, targetPID: $0.targetPID) }
+        return outputs.map { makeEvent($0.shortcut, keyDown: false) }
     }
 
     func resolvedDisplayName(for shortcut: KeyboardShortcut) -> String {
@@ -61,7 +59,7 @@ struct KeyboardEventPlanner {
         return resolved.displayName
     }
 
-    private func makeEvent(_ shortcut: KeyboardShortcut, keyDown: Bool, targetPID: pid_t?) -> PlannedKeyboardEvent {
+    private func makeEvent(_ shortcut: KeyboardShortcut, keyDown: Bool) -> PlannedKeyboardEvent {
         let flags: UInt
         if shortcut.modifierOnly {
             flags = keyDown
@@ -70,7 +68,7 @@ struct KeyboardEventPlanner {
         } else {
             flags = activeModifierFlags | shortcut.modifierFlags
         }
-        return PlannedKeyboardEvent(shortcut: shortcut, keyDown: keyDown, targetPID: targetPID, flags: flags)
+        return PlannedKeyboardEvent(shortcut: shortcut, keyDown: keyDown, flags: flags)
     }
 
     private var activeModifierFlags: UInt {
