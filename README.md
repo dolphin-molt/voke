@@ -1,106 +1,171 @@
-# Voke
+<p align="center">
+  <img src="site/assets/voke-icon.png" width="112" alt="Voke icon">
+</p>
 
-把游戏手柄变成通用的 macOS 动作控制台：每个按钮和摇杆方向都可以映射成键盘操作、组合键、页面滚动、App 切换或终端命令。
+<h1 align="center">Voke</h1>
 
-项目现状、已完成/未完成范围、数据迁移、风险和接手步骤见 [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md)。本机真实外设、权限和重启回归结果见 [`docs/REAL_DEVICE_PERMISSION_REGRESSION.md`](docs/REAL_DEVICE_PERMISSION_REGRESSION.md)。
+<p align="center">
+  Turn a controller into an app-aware control surface for macOS.<br>
+  把手柄变成会跟随当前 App 自动切换的 macOS 控制台。
+</p>
 
-## v0.4.0（公开测试版）
+<p align="center">
+  <a href="https://voke.theopcapp.com/">Website</a> ·
+  <a href="https://github.com/dolphin-molt/voke/releases">Download</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="#english">English</a>
+</p>
 
-- 同时发现多个 macOS GameController 手柄，并在设备菜单中切换
-- 发现外接 HID 键盘/三键、五键小键盘；首次实际按下时学习为 K1–K12，按设备保存
-- 每个设备拥有完全独立的映射，主界面每台设备只呈现一套当前配置
-- 支持按前台 App 自动切换情景方案，同一套逻辑适用于手柄、外接 HID 键盘和鼠标按键
-- 主界面的 `APP ROUTE` 情景条可绑定已有方案、复制当前方案为 App 专属方案，或恢复通用方案
-- 设置页可集中重命名、删除、选择通用方案，以及查看或清除 App 绑定
-- 通用方案始终作为整台电脑的回退；每套专属方案只绑定一个 App，不会因为手动选择而污染微信等其他应用
-- ChatGPT / Codex 专属方案会出现“当前 App”动作：新建任务、模型与推理选择器、听写、语音模式和推理强度控制
-- Voke 只保存 Codex 动作 ID；自动读取当前用户的 `CODEX_HOME/keybindings.json`（默认 `~/.codex/keybindings.json`）并监听修改，不需要重复录入快捷键
-- 实时显示 A/B/X/Y、肩键、扳机、十字键和双摇杆
-- 大面积可点击手柄映射面，控制点与真实按键实时联动，用连线和胶囊标签展示当前动作
-- Mapping Studio 支持为 A/B/X/Y、肩键、扳机、摇杆按下、摇杆八个方向、十字键、HOME 与 Capture 独立配置动作
-- Capture 默认执行 macOS 全屏截图，也可像其他按键一样改成任意动作
-- 支持录制单键、组合键、左右修饰键，并选择“点按一次”或“按住 / 松开”
-- ESC 可作为普通映射录入；另提供直接切换 macOS 中英文输入源的动作
-- 左摇杆默认连续滚动页面；右摇杆左右方向默认按 macOS 最近使用顺序切换 App
-- 支持按键触发自定义 `/bin/zsh -lc` 终端命令，并在事件日志显示退出码和输出
-- 支持包含所有设备配置的 JSON v2 备份、旧版 v1 导入，以及可直接导出的持久诊断日志
-- 提供明亮、石墨、素描胶囊三套界面主题
-- 识别鼠标按键，提供手绘鼠标映射面；手柄右摇杆可映射为鼠标移动，摇杆按压可映射为点击
-- 配置自动持久化；已有用户配置升级时会保留
-- 默认在每次启动后自动恢复映射；关闭主窗口后继续在后台运行
-- 设置页可启用登录 Mac 时自动启动
-- 手柄断连、关闭映射或应用退出时强制释放所有仍处于按下状态的键
-- 在应用中引导开启 macOS 辅助功能权限
-- 首次启动时自动触发 macOS 辅助功能授权提示，并可直达系统设置
-- 响应式窗口布局：宽屏使用大手柄区和当前动作侧栏，窄屏自动切换为纵向控制台
-- 主界面使用胶囊式设备切换和可点击手柄映射面，低频的活动记录、导入导出和诊断集中到设置页
-- 自动化测试覆盖左右修饰键组合、按键连发、摇杆死区和配置备份
+---
 
-## 开发运行
+## 中文
+
+### Voke 是什么？
+
+Voke 是一款 macOS 外设映射工具。它能把游戏手柄、外接 HID 键盘和鼠标按键变成快捷键、鼠标、滚动、App 切换或自定义命令。
+
+Voke 不只做静态按键映射。它会识别当前前台 App，并自动切换到对应方案：进入 Codex 或 ChatGPT 时，手柄可以用来新建任务、按住说话、选择模型或处理请求；切回浏览器或其他软件，同一组按键会恢复成另一套功能。
+
+### 适合用来做什么？
+
+- 用手柄操作 Codex / ChatGPT 的高频动作
+- 为不同 App 保存不同的控制方案，并自动切换
+- 把摇杆变成鼠标移动、滚动或 App 导航
+- 把外接小键盘、鼠标侧键变成自定义控制面板
+- 用按键触发 macOS 快捷键、截图或可信的本地命令
+
+### 三个核心能力
+
+| App 自动适配 | Codex / ChatGPT | 通用 macOS 控制 |
+|---|---|---|
+| 根据前台 App 自动载入专属方案 | 支持任务、听写、模型选择等动作 | 快捷键、鼠标、滚动、App 切换与命令 |
+
+### 下载与使用
+
+1. 从 [GitHub Releases](https://github.com/dolphin-molt/voke/releases) 下载最新 DMG。
+2. 把 Voke 拖入“应用程序”并打开。
+3. 按应用引导开启“辅助功能”；外接 HID 键盘还需要“输入监控”。
+4. 连接设备，选择一个按键，然后为它指定动作。
+
+当前公开测试包为本地自签名、未经过 Apple 公证。首次打开时，可能需要前往“系统设置 → 隐私与安全性”选择“仍要打开”。
+
+### 想二次开发？
+
+项目使用 SwiftUI、GameController、IOKit HID 和 XcodeGen，最低支持 macOS 14。`project.yml` 是 Xcode 工程配置的事实来源；修改工程结构后请重新生成 `.xcodeproj`。
 
 ```bash
-cd /Users/dolphin/Desktop/Dolphin/voke
+git clone https://github.com/dolphin-molt/voke.git
+cd voke
 xcodegen generate
 open Voke.xcodeproj
 ```
 
-也可以直接构建：
+常用命令：
 
 ```bash
-xcodebuild -project Voke.xcodeproj -scheme Voke -configuration Debug build
-```
+# 自动化测试
+xcodebuild test -project Voke.xcodeproj -scheme Voke \
+  -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO
 
-安装并启动唯一的本地测试副本（固定路径 `/Applications/Voke.app`）：
-
-```bash
+# 安装本机测试副本
 ./scripts/install-local-app.sh
-```
 
-该脚本会重新生成工程、构建 Release、复用钥匙串中的 `Voke Local Development` 固定本地签名，并替换固定安装副本。首次从旧的 ad hoc 版本迁移时仍需手动授权一次；后续覆盖安装不会主动清空 TCC 权限。
-
-生成供少量外部测试使用的未公证 DMG：
-
-```bash
+# 生成通用架构测试 DMG
 ./scripts/build-test-dmg.sh
 ```
 
-产物文件名会自动包含应用版本，例如 `dist/Voke-v0.4.0.dmg` 和 `dist/Voke-v0.4.0.dmg.sha256`。该包包含 Apple Silicon 与 Intel 架构，但仍使用本地自签名；测试者首次打开时需要在“系统设置 → 隐私与安全性”中明确选择仍要打开。
+代码入口：
 
-## 外部测试与日志
+| 位置 | 用途 |
+|---|---|
+| `Voke/AppModel.swift` | 应用状态与输入/输出协调 |
+| `Voke/Models/` | 映射、App 动作与运行状态模型 |
+| `Voke/Services/` | 手柄、HID、键鼠输出、存储与快捷键同步 |
+| `Voke/Views/` | SwiftUI 界面与映射工作台 |
+| `VokeTests/` | 自动化测试 |
+| `site/`、`functions/` | 官网与 Cloudflare Pages Functions |
 
-设置页的“导出日志”会生成一个可直接发回的文本文件，其中包含应用版本、安装路径、macOS 版本、权限状态、设备列表、映射摘要、当前事件、跨重启持久日志和最近的 Voke 崩溃报告。终端命令正文及输出会自动隐藏。原始日志保存在：
+更深入的维护资料：
 
-```text
-~/Library/Logs/Voke/
-```
+- [项目交接与架构说明](docs/PROJECT_HANDOFF.md)
+- [真实设备与权限回归](docs/REAL_DEVICE_PERMISSION_REGRESSION.md)
+- [Codex / ChatGPT 控制能力边界](docs/CODEX_CONTROL_RESEARCH.md)
+- [版本变化](CHANGELOG.md) 与 [GitHub Releases](https://github.com/dolphin-molt/voke/releases)
 
-当前本地安装包使用 `Voke Local Development` 自签名。它只用于这台开发机保持稳定权限；Gatekeeper 对该包的实测结果是 `rejected`，也没有公证票据。不要把当前 `.app` 当作可直接发给外部测试者的正式安装包。对外测试前仍需 Developer ID Application 签名、公证和 Stapling，或让测试者明确接受非正式包的 Gatekeeper 风险。
+---
 
-运行自动化测试：
+<a id="english"></a>
+
+## English
+
+### What is Voke?
+
+Voke is a macOS peripheral-mapping app. It turns game controllers, external HID keypads, and mouse buttons into keyboard shortcuts, pointer controls, scrolling, app switching, or trusted local commands.
+
+Voke is app-aware rather than a static key mapper. It detects the foreground app and loads the matching profile automatically. In Codex or ChatGPT, a controller can start a task, activate push-to-talk, open the model picker, or handle a pending request. Switch back to a browser or another app, and the same controls can take on a completely different role.
+
+### What can you use it for?
+
+- Trigger common Codex / ChatGPT actions from a controller
+- Keep a dedicated control profile for each app and switch automatically
+- Use analog sticks for pointer movement, scrolling, or app navigation
+- Turn a keypad or mouse side buttons into a custom control deck
+- Trigger macOS shortcuts, screenshots, and trusted local commands
+
+### Three core capabilities
+
+| App-aware profiles | Codex / ChatGPT | General macOS control |
+|---|---|---|
+| Load a dedicated profile for the foreground app | Map tasks, dictation, model selection, and more | Shortcuts, pointer, scrolling, app switching, and commands |
+
+### Download and use
+
+1. Download the latest DMG from [GitHub Releases](https://github.com/dolphin-molt/voke/releases).
+2. Drag Voke into Applications and open it.
+3. Follow the in-app guide to grant Accessibility access. External HID keypads also require Input Monitoring.
+4. Connect a device, select a control, and assign an action.
+
+Public test builds are locally self-signed and not Apple-notarized. On first launch, you may need to open System Settings → Privacy & Security and choose Open Anyway.
+
+### Building on Voke
+
+Voke uses SwiftUI, GameController, IOKit HID, and XcodeGen, with macOS 14 as the minimum deployment target. `project.yml` is the source of truth for the Xcode project; regenerate `.xcodeproj` after changing the project structure.
 
 ```bash
-xcodebuild test -project Voke.xcodeproj -scheme Voke -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO
+git clone https://github.com/dolphin-molt/voke.git
+cd voke
+xcodegen generate
+open Voke.xcodeproj
 ```
 
-首次发送快捷键前，需要在“系统设置 → 隐私与安全性 → 辅助功能”中允许 Voke。
-应用启动时会自动触发系统授权提示，但 macOS 不允许应用代替用户打开权限开关；未授权时可通过应用内按钮直达对应设置页。
+Common commands:
 
-外接小键盘还需要“系统设置 → 隐私与安全性 → 输入监控”权限。当前使用监听模式：映射动作会执行，但小键盘本来的按键仍会同时传给前台应用，不会被拦截或吞掉。
+```bash
+# Run tests
+xcodebuild test -project Voke.xcodeproj -scheme Voke \
+  -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO
 
-## 按 App 自动切换
+# Install the local test copy
+./scripts/install-local-app.sh
 
-先在设备菜单选择手柄、外接键盘或鼠标，再把目标 App 切到前台。回到 Voke 后，`APP ROUTE` 会继续显示最近使用的外部 App；可以直接选择一个已有方案，或复制当前方案作为该 App 的专属方案。以后切换到这个 App 时，Voke 会自动采用对应方案；没有专属方案的 App 继续使用当前通用方案。
+# Build a universal test DMG
+./scripts/build-test-dmg.sh
+```
 
-这个能力按 macOS Bundle ID 识别应用，是一套通用路由，不依赖 ChatGPT、Codex、闪电说等特定产品。外接键盘和鼠标仍采用监听模式，因此原始按键或点击可能同时传给目标 App；鼠标移动和滚轮目前不能作为独立触发器。
+Project map:
 
-Voke 当前只把目标 App 已公开的快捷键命令当作可靠动作。本机 ChatGPT / Codex 已确认“新建任务”“模型与推理选择器”“听写”和“语音模式”的默认快捷键，可以直接选择。提高、降低和循环推理强度默认没有快捷键；只需在 Codex 的 Keyboard Shortcuts 中设置，Voke 会监听 `keybindings.json` 并自动刷新内存缓存。相关证据与边界见 [`docs/CODEX_CONTROL_RESEARCH.md`](docs/CODEX_CONTROL_RESEARCH.md)。
+| Path | Purpose |
+|---|---|
+| `Voke/AppModel.swift` | Application state and input/output coordination |
+| `Voke/Models/` | Mapping, app-action, and runtime-state models |
+| `Voke/Services/` | Controller/HID input, output, storage, and shortcut sync |
+| `Voke/Views/` | SwiftUI interface and mapping studio |
+| `VokeTests/` | Automated tests |
+| `site/`, `functions/` | Landing page and Cloudflare Pages Functions |
 
-当前主界面使用功能性的俯视手柄映射图，目标是快速选择按键并读取映射，不再尝试表现工业 CAD 或实物扫描效果。
+For deeper maintenance details, see:
 
-## 安全设计
-
-应用默认在启动后恢复映射，也可在设置中关闭“启动后自动运行映射”。任何断连、暂停映射或退出都会释放仍处于按下状态的键，避免修饰键卡住。关闭主窗口不会退出应用，手柄映射会继续在后台运行。
-
-键盘快捷键需要 macOS 辅助功能权限；终端命令不依赖该权限。终端动作拥有当前用户权限，请只配置你理解并信任的命令。单独的 Command、Shift、Option、Control 使用 macOS `flagsChanged` 事件，左右修饰键可以分别录制。
-
-普通按键、组合键和单独修饰键都使用系统级事件投递。“点按一次”会保持 60ms 的按下时间，兼容 Electron 和 Web 输入框。
+- [Project handoff and architecture notes](docs/PROJECT_HANDOFF.md)
+- [Real-device and permission regression](docs/REAL_DEVICE_PERMISSION_REGRESSION.md)
+- [Codex / ChatGPT control boundaries](docs/CODEX_CONTROL_RESEARCH.md)
+- [Changelog](CHANGELOG.md) and [GitHub Releases](https://github.com/dolphin-molt/voke/releases)

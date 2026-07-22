@@ -1,6 +1,6 @@
 # Voke 落地页
 
-这是 Voke 的轻量落地页，主要介绍用手柄控制 Mac，并提供站内功能建议表单。表单由 Cloudflare Pages Functions 接收，数据保存在 D1 的 `feedback` 表中。
+这是 Voke 的轻量落地页，主要介绍用手柄控制 Mac，支持中英文切换并提供站内功能建议表单。语言选择保存在浏览器本地；表单由 Cloudflare Pages Functions 接收，数据保存在 D1 的 `feedback` 表中。
 
 本地预览：
 

@@ -7,17 +7,21 @@
   <meta name="theme-color" content="#f5f0df">
   <title>Voke — 用手柄控制 Codex、ChatGPT 与你的 Mac</title>
   <link rel="icon" href="assets/voke-icon.png?v=0.4.0">
-  <link rel="stylesheet" href="styles.css?v=20260722.1">
+  <link rel="stylesheet" href="styles.css?v=20260722.2">
 </head>
 <body>
   <header class="nav shell">
-    <a class="brand" href="#top" aria-label="Voke 首页">
+    <a class="brand" href="#top" aria-label="Voke Home">
       <img src="assets/voke-icon.png?v=0.4.0" alt="">
       <span>VOKE</span>
     </a>
     <div class="nav-actions">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="zh" aria-pressed="true">中文</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
       <a class="quiet-link" href="https://github.com/dolphin-molt/voke" target="_blank" rel="noreferrer">GitHub ↗</a>
-      <a class="mini-button" href="https://github.com/dolphin-molt/voke/releases/download/v0.4.0/Voke-v0.4.0.dmg" download="Voke-v0.4.0.dmg">下载</a>
+      <a class="mini-button" href="https://github.com/dolphin-molt/voke/releases/download/v0.4.0/Voke-v0.4.0.dmg" download="Voke-v0.4.0.dmg" data-i18n="nav.download">下载</a>
     </div>
   </header>
 
@@ -25,14 +29,14 @@
     <section class="hero shell">
       <div class="hero-copy reveal">
         <p class="eyebrow"><i></i> APP-AWARE CONTROL · V0.4</p>
-        <h1>一只手柄，<br><em>控制每个 App。</em></h1>
-        <p class="summary">切到 Codex、ChatGPT 或其他 App，Voke 会自动换成对应的按键方案。新建任务、按住说话、模型选择和常用操作，抬手就能触发。</p>
-        <p class="release-note">当前版本 v0.4.0，新增前台 App 自动适配与 Codex / ChatGPT 专属动作。仍为测试版，安装时可能需要在“隐私与安全性”中选择仍要打开。</p>
+        <h1 data-i18n-html="hero.title">一只手柄，<br><em>控制每个 App。</em></h1>
+        <p class="summary" data-i18n="hero.summary">切到 Codex、ChatGPT 或其他 App，Voke 会自动换成对应的按键方案。新建任务、按住说话、模型选择和常用操作，抬手就能触发。</p>
+        <p class="release-note" data-i18n="hero.release">当前版本 v0.4.0，新增前台 App 自动适配与 Codex / ChatGPT 专属动作。仍为测试版，安装时可能需要在“隐私与安全性”中选择仍要打开。</p>
       </div>
 
-      <div class="controller-card reveal" aria-label="Voke 手柄映射示意图">
-        <div class="card-top"><span>PRO CONTROLLER</span><span class="connected"><i></i> CODEX 方案已启用</span></div>
-        <svg class="controller" viewBox="0 0 1000 680" role="img" aria-label="与 Voke 应用内一致的手绘 Pro Controller">
+      <div class="controller-card reveal" aria-label="Voke controller mapping preview" data-i18n-aria="controller.preview">
+        <div class="card-top"><span>PRO CONTROLLER</span><span class="connected"><i></i><span data-i18n="controller.status">CODEX 方案已启用</span></span></div>
+        <svg class="controller" viewBox="0 0 1000 680" role="img" aria-label="Voke hand-drawn Pro Controller" data-i18n-aria="controller.svg">
           <defs>
             <pattern id="hatch" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(16)">
               <line x1="0" y1="0" x2="0" y2="11" stroke="#20231f" stroke-opacity=".10" stroke-width="1.4"/>
@@ -76,57 +80,57 @@
           </g>
           <path class="map-line" d="M815 305C876 348 842 503 690 591C625 629 550 625 500 625"/><circle class="map-dot" cx="815" cy="305" r="6"/>
         </svg>
-        <div class="mapping-pill"><span>A</span><p><small>CODEX · 当前映射</small><b>新建任务 · ⌘N</b></p><strong>↗</strong></div>
+        <div class="mapping-pill"><span>A</span><p><small data-i18n="controller.mappingLabel">CODEX · 当前映射</small><b data-i18n="controller.mappingAction">新建任务 · ⌘N</b></p><strong>↗</strong></div>
       </div>
     </section>
 
-    <section class="abilities shell reveal" aria-label="主要功能">
-      <article><span>01</span><b>按 App 自动切换</b><p>每个 App 保存自己的按键方案。</p></article>
-      <article><span>02</span><b>Codex / ChatGPT 动作</b><p>任务、语音、模型选择，直接映射。</p></article>
-      <article><span>03</span><b>控制整个 Mac</b><p>快捷键、鼠标、滚动与 App 切换。</p></article>
+    <section class="abilities shell reveal" aria-label="Core features" data-i18n-aria="abilities.label">
+      <article><span>01</span><b data-i18n="abilities.routingTitle">按 App 自动切换</b><p data-i18n="abilities.routingText">每个 App 保存自己的按键方案。</p></article>
+      <article><span>02</span><b data-i18n="abilities.codexTitle">Codex / ChatGPT 动作</b><p data-i18n="abilities.codexText">任务、语音、模型选择，直接映射。</p></article>
+      <article><span>03</span><b data-i18n="abilities.macTitle">控制整个 Mac</b><p data-i18n="abilities.macText">快捷键、鼠标、滚动与 App 切换。</p></article>
     </section>
 
     <section class="app-routing shell reveal" aria-labelledby="app-routing-title">
       <div class="app-routing-copy">
         <p class="eyebrow">APP ROUTING</p>
-        <h2 id="app-routing-title">切到 Codex，<br>手柄就进入 <em>Codex 模式。</em></h2>
-        <p>Voke 会识别当前前台 App，并自动载入它的专属方案。回到 ChatGPT、浏览器或其他软件时，同一组按键会立刻换回对应功能。</p>
+        <h2 id="app-routing-title" data-i18n-html="routing.title">切到 Codex，<br>手柄就进入 <em>Codex 模式。</em></h2>
+        <p data-i18n="routing.summary">Voke 会识别当前前台 App，并自动载入它的专属方案。回到 ChatGPT、浏览器或其他软件时，同一组按键会立刻换回对应功能。</p>
         <ul>
-          <li><i>01</i><span><b>自动切换，不用手动换配置</b><small>手柄、外接键盘和鼠标按键都使用同一套路由。</small></span></li>
-          <li><i>02</i><span><b>Codex 快捷键自动同步</b><small>你在 Codex 中修改快捷键，Voke 会读取并刷新，不用重复录入。</small></span></li>
-          <li><i>03</i><span><b>不锁死在某一个 App</b><small>Codex / ChatGPT 是重点适配，其他 Mac App 也能建立专属方案。</small></span></li>
+          <li><i>01</i><span><b data-i18n="routing.autoTitle">自动切换，不用手动换配置</b><small data-i18n="routing.autoText">手柄、外接键盘和鼠标按键都使用同一套路由。</small></span></li>
+          <li><i>02</i><span><b data-i18n="routing.syncTitle">Codex 快捷键自动同步</b><small data-i18n="routing.syncText">你在 Codex 中修改快捷键，Voke 会读取并刷新，不用重复录入。</small></span></li>
+          <li><i>03</i><span><b data-i18n="routing.openTitle">不锁死在某一个 App</b><small data-i18n="routing.openText">Codex / ChatGPT 是重点适配，其他 Mac App 也能建立专属方案。</small></span></li>
         </ul>
       </div>
 
-      <div class="route-console" aria-label="Codex 专属映射示例">
+      <div class="route-console" aria-label="Codex profile example" data-i18n-aria="routing.consoleLabel">
         <div class="route-console-top">
-          <span>当前前台 App</span>
-          <strong><i></i> 自动跟随</strong>
+          <span data-i18n="routing.foreground">当前前台 App</span>
+          <strong><i></i><span data-i18n="routing.follow">自动跟随</span></strong>
         </div>
         <div class="app-switcher">
-          <div class="app-chip active"><span class="app-mark codex">C</span><p><b>Codex</b><small>专属方案</small></p><em>已启用</em></div>
-          <div class="app-chip"><span class="app-mark chatgpt">◎</span><p><b>ChatGPT</b><small>专属方案</small></p></div>
-          <div class="app-chip"><span class="app-mark mac">⌘</span><p><b>其他 App</b><small>通用方案</small></p></div>
+          <div class="app-chip active"><span class="app-mark codex">C</span><p><b>Codex</b><small data-i18n="routing.dedicated">专属方案</small></p><em data-i18n="routing.enabled">已启用</em></div>
+          <div class="app-chip"><span class="app-mark chatgpt">◎</span><p><b>ChatGPT</b><small data-i18n="routing.dedicated">专属方案</small></p></div>
+          <div class="app-chip"><span class="app-mark mac">⌘</span><p><b data-i18n="routing.otherApp">其他 App</b><small data-i18n="routing.general">通用方案</small></p></div>
         </div>
         <div class="action-list">
-          <div><kbd>A</kbd><p><b>新建任务</b><small>Codex / ChatGPT</small></p><span>⌘N</span></div>
-          <div><kbd>X</kbd><p><b>按住说话</b><small>按下开始，松开结束</small></p><span>⌃⇧D</span></div>
-          <div><kbd>Y</kbd><p><b>模型与推理选择器</b><small>选择模型和推理强度</small></p><span>⌃⇧M</span></div>
-          <div><kbd>ZR</kbd><p><b>接受修改</b><small>处理当前等待请求</small></p><span>↩</span></div>
+          <div><kbd>A</kbd><p><b data-i18n="actions.newTask">新建任务</b><small>Codex / ChatGPT</small></p><span>⌘N</span></div>
+          <div><kbd>X</kbd><p><b data-i18n="actions.dictation">按住说话</b><small data-i18n="actions.dictationDetail">按下开始，松开结束</small></p><span>⌃⇧D</span></div>
+          <div><kbd>Y</kbd><p><b data-i18n="actions.model">模型与推理选择器</b><small data-i18n="actions.modelDetail">选择模型和推理强度</small></p><span>⌃⇧M</span></div>
+          <div><kbd>ZR</kbd><p><b data-i18n="actions.approve">接受修改</b><small data-i18n="actions.approveDetail">处理当前等待请求</small></p><span>↩</span></div>
         </div>
-        <p class="route-footnote"><span>↻</span> 部分高级动作需先在 Codex 的 Keyboard Shortcuts 中设置，Voke 会自动同步。</p>
+        <p class="route-footnote"><span>↻</span><span data-i18n="routing.note">部分高级动作需先在 Codex 的 Keyboard Shortcuts 中设置，Voke 会自动同步。</span></p>
       </div>
     </section>
 
     <section class="start shell" id="start">
       <div class="section-copy reveal">
         <p class="eyebrow">QUICK START</p>
-        <h2>下载，拖入应用程序，<br>然后连接手柄。</h2>
+        <h2 data-i18n-html="start.title">下载，拖入应用程序，<br>然后连接手柄。</h2>
       </div>
       <ol class="steps reveal">
-        <li><span>1</span><div><b>下载 Voke-v0.4.0.dmg</b><p>打开安装包，把 Voke 拖入“应用程序”。</p></div></li>
-        <li><span>2</span><div><b>允许系统权限</b><p>按应用引导开启辅助功能；测试版如被拦截，请在“隐私与安全性”中仍要打开。</p></div></li>
-        <li><span>3</span><div><b>连接并设置手柄</b><p>点击手柄上的按钮，选择它要执行的动作。</p></div></li>
+        <li><span>1</span><div><b data-i18n="start.download">下载 Voke-v0.4.0.dmg</b><p data-i18n="start.downloadText">打开安装包，把 Voke 拖入“应用程序”。</p></div></li>
+        <li><span>2</span><div><b data-i18n="start.permission">允许系统权限</b><p data-i18n="start.permissionText">按应用引导开启辅助功能；测试版如被拦截，请在“隐私与安全性”中仍要打开。</p></div></li>
+        <li><span>3</span><div><b data-i18n="start.connect">连接并设置手柄</b><p data-i18n="start.connectText">点击手柄上的按钮，选择它要执行的动作。</p></div></li>
       </ol>
     </section>
 
@@ -134,31 +138,31 @@
       <div class="contact-heading">
         <img src="assets/voke-icon.png?v=0.4.0" alt="Voke">
         <div>
-          <p>还需要别的功能？</p>
-          <h2>告诉我你想怎么控制。</h2>
-          <span>建议会直接送到 Voke，不需要 GitHub 账号。</span>
+          <p data-i18n="feedback.kicker">还需要别的功能？</p>
+          <h2 data-i18n="feedback.title">告诉我你想怎么控制。</h2>
+          <span data-i18n="feedback.summary">建议会直接送到 Voke，不需要 GitHub 账号。</span>
         </div>
       </div>
       <form class="feedback-form" id="feedback-form">
         <label class="feedback-message">
-          <span>你的想法 <i>必填</i></span>
-          <textarea name="message" maxlength="1000" rows="4" placeholder="例如：我希望长按 ZR 时，右摇杆临时变成滚轮……" required></textarea>
+          <span data-i18n-html="feedback.messageLabel">你的想法 <i>必填</i></span>
+          <textarea name="message" maxlength="1000" rows="4" placeholder="例如：我希望长按 ZR 时，右摇杆临时变成滚轮……" data-i18n-placeholder="feedback.messagePlaceholder" required></textarea>
           <small><b id="message-count">0</b> / 1000</small>
         </label>
         <div class="feedback-meta">
-          <label><span>怎么称呼你 <i>可选</i></span><input name="name" maxlength="60" autocomplete="name" placeholder="名字或昵称"></label>
-          <label><span>方便联系你吗 <i>可选</i></span><input name="contact" maxlength="120" autocomplete="email" placeholder="邮箱、微信或其他方式"></label>
+          <label><span data-i18n-html="feedback.nameLabel">怎么称呼你 <i>可选</i></span><input name="name" maxlength="60" autocomplete="name" placeholder="名字或昵称" data-i18n-placeholder="feedback.namePlaceholder"></label>
+          <label><span data-i18n-html="feedback.contactLabel">方便联系你吗 <i>可选</i></span><input name="contact" maxlength="120" autocomplete="email" placeholder="邮箱、微信或其他方式" data-i18n-placeholder="feedback.contactPlaceholder"></label>
         </div>
-        <label class="feedback-trap" aria-hidden="true">请留空<input name="website" tabindex="-1" autocomplete="off"></label>
+        <label class="feedback-trap" aria-hidden="true"><span data-i18n="feedback.trap">请留空</span><input name="website" tabindex="-1" autocomplete="off"></label>
         <div class="feedback-submit">
-          <p class="feedback-status" id="feedback-status" role="status" aria-live="polite">提交后我会认真看每一条。</p>
-          <button type="submit"><span>提交功能建议</span><strong>↗</strong></button>
+          <p class="feedback-status" id="feedback-status" role="status" aria-live="polite" data-i18n="feedback.statusIdle">提交后我会认真看每一条。</p>
+          <button type="submit"><span data-i18n="feedback.submit">提交功能建议</span><strong>↗</strong></button>
         </div>
       </form>
     </section>
   </main>
 
   <footer class="shell"><span>VOKE · 2026</span><a href="https://github.com/dolphin-molt/voke" target="_blank" rel="noreferrer">github.com/dolphin-molt/voke</a></footer>
-  <script src="app.js?v=20260722.1"></script>
+  <script src="app.js?v=20260722.2"></script>
 </body>
 </html>
