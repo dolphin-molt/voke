@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Voke：用游戏手柄控制 Mac，把按键映射为快捷键、鼠标移动和常用动作。">
+  <meta name="description" content="Voke：用游戏手柄控制 Codex、ChatGPT 与整个 Mac，并根据当前 App 自动切换专属映射。">
   <meta name="theme-color" content="#f5f0df">
-  <title>Voke — 用手柄控制你的 Mac</title>
+  <title>Voke — 用手柄控制 Codex、ChatGPT 与你的 Mac</title>
   <link rel="icon" href="assets/voke-icon.png?v=0.4.0">
-  <link rel="stylesheet" href="styles.css?v=20260721.3">
+  <link rel="stylesheet" href="styles.css?v=20260722.1">
 </head>
 <body>
   <header class="nav shell">
@@ -24,14 +24,14 @@
   <main id="top">
     <section class="hero shell">
       <div class="hero-copy reveal">
-        <p class="eyebrow"><i></i> VOKE FOR MACOS</p>
-        <h1>用手柄，<br><em>控制你的 Mac。</em></h1>
-        <p class="summary">把手柄按键和摇杆，变成快捷键、鼠标移动、点击、滚动和 App 切换。</p>
-        <p class="release-note">当前版本 v0.4.0，新增按 App 自动切换方案与 Codex 动作；仍为测试版，安装时可能需要在“隐私与安全性”中选择仍要打开。</p>
+        <p class="eyebrow"><i></i> APP-AWARE CONTROL · V0.4</p>
+        <h1>一只手柄，<br><em>控制每个 App。</em></h1>
+        <p class="summary">切到 Codex、ChatGPT 或其他 App，Voke 会自动换成对应的按键方案。新建任务、按住说话、模型选择和常用操作，抬手就能触发。</p>
+        <p class="release-note">当前版本 v0.4.0，新增前台 App 自动适配与 Codex / ChatGPT 专属动作。仍为测试版，安装时可能需要在“隐私与安全性”中选择仍要打开。</p>
       </div>
 
       <div class="controller-card reveal" aria-label="Voke 手柄映射示意图">
-        <div class="card-top"><span>PRO CONTROLLER</span><span class="connected"><i></i> 已连接</span></div>
+        <div class="card-top"><span>PRO CONTROLLER</span><span class="connected"><i></i> CODEX 方案已启用</span></div>
         <svg class="controller" viewBox="0 0 1000 680" role="img" aria-label="与 Voke 应用内一致的手绘 Pro Controller">
           <defs>
             <pattern id="hatch" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(16)">
@@ -76,14 +76,46 @@
           </g>
           <path class="map-line" d="M815 305C876 348 842 503 690 591C625 629 550 625 500 625"/><circle class="map-dot" cx="815" cy="305" r="6"/>
         </svg>
-        <div class="mapping-pill"><span>A</span><p><small>当前映射</small><b>鼠标左键</b></p><strong>↗</strong></div>
+        <div class="mapping-pill"><span>A</span><p><small>CODEX · 当前映射</small><b>新建任务 · ⌘N</b></p><strong>↗</strong></div>
       </div>
     </section>
 
     <section class="abilities shell reveal" aria-label="主要功能">
-      <article><span>01</span><b>按键映射</b><p>录制一个键或组合快捷键。</p></article>
-      <article><span>02</span><b>鼠标控制</b><p>用右摇杆移动，用按压点击。</p></article>
-      <article><span>03</span><b>后台运行</b><p>窗口关闭后仍继续响应手柄。</p></article>
+      <article><span>01</span><b>按 App 自动切换</b><p>每个 App 保存自己的按键方案。</p></article>
+      <article><span>02</span><b>Codex / ChatGPT 动作</b><p>任务、语音、模型选择，直接映射。</p></article>
+      <article><span>03</span><b>控制整个 Mac</b><p>快捷键、鼠标、滚动与 App 切换。</p></article>
+    </section>
+
+    <section class="app-routing shell reveal" aria-labelledby="app-routing-title">
+      <div class="app-routing-copy">
+        <p class="eyebrow">APP ROUTING</p>
+        <h2 id="app-routing-title">切到 Codex，<br>手柄就进入 <em>Codex 模式。</em></h2>
+        <p>Voke 会识别当前前台 App，并自动载入它的专属方案。回到 ChatGPT、浏览器或其他软件时，同一组按键会立刻换回对应功能。</p>
+        <ul>
+          <li><i>01</i><span><b>自动切换，不用手动换配置</b><small>手柄、外接键盘和鼠标按键都使用同一套路由。</small></span></li>
+          <li><i>02</i><span><b>Codex 快捷键自动同步</b><small>你在 Codex 中修改快捷键，Voke 会读取并刷新，不用重复录入。</small></span></li>
+          <li><i>03</i><span><b>不锁死在某一个 App</b><small>Codex / ChatGPT 是重点适配，其他 Mac App 也能建立专属方案。</small></span></li>
+        </ul>
+      </div>
+
+      <div class="route-console" aria-label="Codex 专属映射示例">
+        <div class="route-console-top">
+          <span>当前前台 App</span>
+          <strong><i></i> 自动跟随</strong>
+        </div>
+        <div class="app-switcher">
+          <div class="app-chip active"><span class="app-mark codex">C</span><p><b>Codex</b><small>专属方案</small></p><em>已启用</em></div>
+          <div class="app-chip"><span class="app-mark chatgpt">◎</span><p><b>ChatGPT</b><small>专属方案</small></p></div>
+          <div class="app-chip"><span class="app-mark mac">⌘</span><p><b>其他 App</b><small>通用方案</small></p></div>
+        </div>
+        <div class="action-list">
+          <div><kbd>A</kbd><p><b>新建任务</b><small>Codex / ChatGPT</small></p><span>⌘N</span></div>
+          <div><kbd>X</kbd><p><b>按住说话</b><small>按下开始，松开结束</small></p><span>⌃⇧D</span></div>
+          <div><kbd>Y</kbd><p><b>模型与推理选择器</b><small>选择模型和推理强度</small></p><span>⌃⇧M</span></div>
+          <div><kbd>ZR</kbd><p><b>接受修改</b><small>处理当前等待请求</small></p><span>↩</span></div>
+        </div>
+        <p class="route-footnote"><span>↻</span> 部分高级动作需先在 Codex 的 Keyboard Shortcuts 中设置，Voke 会自动同步。</p>
+      </div>
     </section>
 
     <section class="start shell" id="start">
@@ -127,6 +159,6 @@
   </main>
 
   <footer class="shell"><span>VOKE · 2026</span><a href="https://github.com/dolphin-molt/voke" target="_blank" rel="noreferrer">github.com/dolphin-molt/voke</a></footer>
-  <script src="app.js?v=20260721.3"></script>
+  <script src="app.js?v=20260722.1"></script>
 </body>
 </html>
